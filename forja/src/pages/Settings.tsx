@@ -66,7 +66,11 @@ export function SettingsPage() {
                 Guardar
               </button>
             </div>
-            <span className="hint-text">Se guarda en la base de datos local de FORJA, en tu computadora. No se envía a ningún otro servicio.</span>
+            <span className="hint-text">
+              {status.data?.storage === "blob"
+                ? "Se guarda en la base de FORJA, dentro de tu almacenamiento privado de Vercel. Solo se usa para hablar con Anthropic."
+                : "Se guarda en la base de datos local de FORJA, en tu computadora. No se envía a ningún otro servicio."}
+            </span>
             {status.data?.keySource === "ajustes" && (
               <button className="btn sm danger" style={{ alignSelf: "flex-start" }} onClick={() => save({ apiKey: "" })}>
                 Borrar la clave guardada
@@ -101,6 +105,7 @@ export function SettingsPage() {
           Cambiar a {theme === "dark" ? "claro" : "oscuro"}
         </button>
       </div>
+      {status.data?.storage === "blob" && <CloudUsage />}
       {status.data?.auth && (
         <div className="card pad mt-16 row between">
           <div>
@@ -126,6 +131,42 @@ export function SettingsPage() {
             : "Con el servidor corriendo en tu computadora, abrí en el celular la dirección que muestra la terminal al iniciar (por ejemplo http://192.168.0.10:3717), conectado a la misma red wifi. Desde el menú del navegador podés agregarla a la pantalla de inicio."}
         </p>
       </div>
+    </div>
+  );
+}
+
+function CloudUsage() {
+  const info = useApi<any>("/api/status/storage");
+  const u = info.data?.usage;
+  const q = info.data?.quota;
+  if (!u || !q) return null;
+  const rows = [
+    { label: "Guardados (operaciones avanzadas)", used: u.advanced, max: q.advanced },
+    { label: "Consultas (operaciones simples)", used: u.simple, max: q.simple },
+  ];
+  return (
+    <div className="card pad mt-16 col gap-16">
+      <h3>Almacenamiento en la nube</h3>
+      <p className="muted small">
+        El plan gratuito de Vercel Blob incluye un cupo por mes. Si se pasa, el almacenamiento queda bloqueado 30 días. FORJA agrupa los cambios para gastar poco. Cifras aproximadas de este mes calendario.
+      </p>
+      {rows.map((r) => {
+        const pct = Math.min(100, Math.round((r.used / r.max) * 100));
+        return (
+          <div key={r.label} className="col gap-6">
+            <div className="row between small">
+              <span>{r.label}</span>
+              <span className="mono">
+                {r.used.toLocaleString("es-AR")} / {r.max.toLocaleString("es-AR")}
+              </span>
+            </div>
+            <div className="meter">
+              <div className={pct >= 80 ? "bad" : pct >= 60 ? "warn" : ""} style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+        );
+      })}
+      {info.data.saving && <Callout kind="warn">Modo ahorro activo: los cambios se suben cada uno o dos minutos para no agotar el cupo.</Callout>}
     </div>
   );
 }

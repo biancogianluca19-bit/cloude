@@ -21,7 +21,7 @@ import { gradePhoto, savePhoto, photoPathFromToken } from "./ai/photo.ts";
 import { aiAvailable, model, testConnection, DEFAULT_MODEL } from "./ai/llm.ts";
 import { invalidateIndex, search } from "./retrieval/search.ts";
 import { requireAuth, login, logout, authRequired, isAuthed } from "./auth.ts";
-import { BLOB_MODE, syncBefore, markDirty, flush, currentVersion, acquireRequestSlot, persistFile, removeFile, ensureLocalFile, takeIncoming, INCOMING_PREFIX, storageInfo, cleanupOrphans } from "./storage.ts";
+import { BLOB_MODE, syncBefore, recordChange, currentVersion, acquireRequestSlot, persistFile, removeFile, ensureLocalFile, takeIncoming, INCOMING_PREFIX, storageInfo, cleanupOrphans } from "./storage.ts";
 import { getDb } from "./db.ts";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 60 * 1024 * 1024, files: 30 } });
@@ -99,8 +99,9 @@ export function createApp() {
   });
 
   // ------------------------------------------------------------ Persistencia (Vercel)
-  // Antes de cada pedido la base local se pone al día (con la versión que ya vio el navegador);
-  // si el pedido la cambió, se guarda ANTES de responder y la respuesta lleva la versión nueva.
+  // Antes de cada pedido la base local se pone al día (con la versión que ya vio el navegador).
+  // Si el pedido la cambió, el cambio queda registrado y se sube agrupado con los siguientes;
+  // la respuesta lleva la versión nueva, para que otra instancia sepa que tiene que esperarlo.
   app.use("/api", async (req, res, next) => {
     if (!BLOB_MODE) return next();
     const release = await acquireRequestSlot();
@@ -136,22 +137,11 @@ export function createApp() {
         } catch {
           cs = null;
         }
-        const finish = () => {
-          const v = currentVersion();
-          if (v && !res.headersSent) res.setHeader("x-forja-version", v);
-          release();
-          return end(...args);
-        };
-        if (!changed) return finish();
-        markDirty();
-        if (res.headersSent) {
-          release();
-          return end(...args);
-        }
-        flush(cs, `${req.method} ${req.path}`)
-          .catch((e) => console.error("[forja] no se pudo guardar:", e?.message ?? e))
-          .finally(finish);
-        return res;
+        if (changed) recordChange(cs, `${req.method} ${req.path}`);
+        const v = currentVersion();
+        if (v && !res.headersSent) res.setHeader("x-forja-version", v);
+        release();
+        return end(...args);
       };
       next();
     } catch (e) {

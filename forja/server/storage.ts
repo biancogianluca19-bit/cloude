@@ -11,8 +11,23 @@ import { DATA_DIR, closeDb, dbPath, getDb } from "./db.ts";
 export const BLOB_MODE = !!process.env.BLOB_READ_WRITE_TOKEN && process.env.FORJA_STORAGE !== "local";
 const PREFIX = process.env.FORJA_BLOB_PREFIX ?? "forja/";
 const DB_KEY = PREFIX + "db/forja.db";
+
+// Cupo del plan gratuito de Vercel Blob por mes: 2.000 operaciones avanzadas (put, list) y
+// 10.000 simples (head, get sin caché). Pasado el cupo, el store queda bloqueado 30 días.
+// Por eso los cambios se agrupan: se suben cuando pasan unos segundos sin actividad.
+export const BLOB_QUOTA = { advanced: 2000, simple: 10000 };
+const IDLE_FLUSH_MS = 15_000;
+const MAX_PENDING_MS = 45_000;
+/** Con el cupo muy usado, se agrupa más todavía. */
+const SAVING_IDLE_MS = 60_000;
+const SAVING_MAX_MS = 180_000;
+/** Cada cuánto una lectura vuelve a mirar el store aunque el navegador ya tenga esta versión. */
+const RECHECK_READ_MS = 5 * 60_000;
+const RECHECK_WRITE_MS = 60_000;
+/** Lectura sin versión del navegador (otro dispositivo, primera visita). */
 const CHECK_EVERY_MS = 15_000;
-const FLUSH_DELAY_MS = 1_200;
+/** Cuánto se espera a que otra instancia suba sus cambios pendientes. */
+const WAIT_OTHER_MS = 25_000;
 
 type BlobMod = typeof import("@vercel/blob");
 let mod: BlobMod | null = null;
@@ -21,6 +36,7 @@ async function blob(): Promise<BlobMod> {
   return mod;
 }
 
+const INSTANCE = Math.random().toString(36).slice(2, 8);
 let etag: string | null = null;
 const events: string[] = [];
 function note(e: string) {
@@ -30,11 +46,19 @@ function note(e: string) {
 let loaded = false;
 let lastCheck = 0;
 let dirty = false;
+let dirtySince = 0;
+let seq = 0;
+/** Cambios locales todavía sin subir, en orden. null = cambio sin changeset (no se puede fusionar). */
+let pending: (Uint8Array | null)[] = [];
 let timer: ReturnType<typeof setTimeout> | null = null;
+let flushWaiter: { promise: Promise<void>; resolve: () => void } | null = null;
 let lock: Promise<unknown> = Promise.resolve();
 /** Pedidos en curso en esta instancia (informativo). */
 let active = 0;
 let requestQueue: Promise<unknown> = Promise.resolve();
+
+// Operaciones contadas en esta instancia desde el último guardado; se suman al total del mes en la base.
+const ops = { advanced: 0, simple: 0 };
 
 /**
  * En la versión publicada, cada instancia atiende los pedidos de a uno: ninguna escritura
@@ -75,16 +99,18 @@ async function readStream(stream: ReadableStream<Uint8Array>): Promise<Buffer> {
   return Buffer.concat(chunks);
 }
 
-/** Trae la base del store si cambió desde la última vez. */
+/** Trae la base del store si cambió desde la última vez. Nunca con cambios locales sin subir. */
 async function pull(force = false) {
   const { get } = await blob();
   // Si la copia local no existe (instancia nueva o /tmp limpio), se descarga siempre.
   const haveLocal = fs.existsSync(dbPath());
+  ops.simple++;
   const r = await get(DB_KEY, { access: "private", useCache: false, ...(etag && !force && haveLocal ? { ifNoneMatch: etag } : {}) }).catch((e: any) => {
     if (e?.name === "BlobNotFoundError") return null;
     throw e;
   });
   lastCheck = Date.now();
+  loaded = true;
   if (!r) return; // todavía no hay base guardada: se usa la local (nueva)
   if (r.statusCode === 304) return;
   const buf = await readStream(r.stream);
@@ -97,112 +123,215 @@ async function pull(force = false) {
 }
 
 /**
- * Antes de atender un pedido: asegura que la base local esté al día.
- * Las escrituras siempre verifican; las lecturas, como mucho una vez por minuto.
+ * Versión de la base que tiene esta instancia. Con cambios sin subir lleva además la marca de
+ * la instancia: si el próximo pedido del navegador cae en otra, esa sabe que tiene que esperar.
  */
-/** Versión de la base que tiene esta instancia (etag del store). */
 export function currentVersion(): string | null {
+  if (dirty) return `${etag ?? "nueva"}|${INSTANCE}.${seq}`;
   return etag;
 }
 
+function parseVersion(v: string): { base: string; owner: string | null } {
+  const [base, rest] = v.split("|");
+  return { base, owner: rest ? rest.split(".")[0] : null };
+}
+
 /**
- * @param write  el pedido puede escribir: siempre se verifica contra el store.
- * @param seen   última versión que vio el navegador: si no coincide, esta instancia está atrasada.
+ * Antes de atender un pedido: asegura que la base local sirva para responderlo.
+ * @param write  el pedido puede escribir.
+ * @param seen   última versión que vio el navegador.
  */
 export async function syncBefore(write: boolean, seen?: string | null) {
   if (!BLOB_MODE) return;
-  if (seen && seen !== etag && !dirty) {
-    await exclusive(async () => {
-      if (!dirty && seen !== etag) await pull();
-      loaded = true;
-    });
-    if (!write) return;
-  }
-  // Antes de escribir, lo pendiente de esta instancia se sube primero; así, si otra instancia
-  // escribió después, se trae su versión sin pisar nada.
-  if (write && dirty) await flush();
   await exclusive(async () => {
-    if (dirty) return; // lectura con cambios locales sin subir: la copia local es la más nueva
-    if (loaded && !write && Date.now() - lastCheck < CHECK_EVERY_MS) return;
+    const v = seen ? parseVersion(seen) : null;
+    const mine = etag ?? "nueva";
+    if (v?.owner && v.owner !== INSTANCE) {
+      // Otra instancia tiene cambios que el navegador ya vio y todavía no subió: se espera a que lo haga.
+      if (dirty) await flushLocked();
+      await waitForRemoteChange(v.base);
+      await pull();
+      return;
+    }
+    if (v && v.base !== mine) {
+      // El navegador vio una versión distinta (otra instancia guardó): se sube lo propio y se trae la última.
+      if (dirty) await flushLocked();
+      await pull();
+      return;
+    }
+    if (dirty) {
+      // Esta instancia tiene lo más nuevo; se sube cuando termine la actividad.
+      if (!timer) schedule();
+      return;
+    }
+    const age = Date.now() - lastCheck;
+    if (loaded) {
+      if (v && age < (write ? RECHECK_WRITE_MS : RECHECK_READ_MS)) return;
+      if (!v && !write && age < CHECK_EVERY_MS) return;
+    }
     await pull();
-    loaded = true;
   });
 }
 
-/** Después de un pedido que cambió la base: se sube agrupando cambios cercanos. */
-export function markDirty() {
+async function waitForRemoteChange(base: string) {
+  const until = Date.now() + WAIT_OTHER_MS;
+  while (Date.now() < until) {
+    const t = await remoteEtag();
+    if ((t ?? "nueva") !== base) return;
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  note("esperé a otra instancia sin ver cambios");
+}
+
+/** Registra que un pedido cambió la base. Se sube agrupado, sin demorar la respuesta. */
+export function recordChange(changeset: Uint8Array | null, label = "cambio") {
   if (!BLOB_MODE) return;
-  dirty = true;
-  if (timer) return;
-  const done = new Promise<void>((resolve) => {
-    timer = setTimeout(() => {
-      timer = null;
-      flush()
-        .catch((e) => console.error("[forja] no se pudo guardar la base:", e?.message ?? e))
-        .finally(resolve);
-    }, FLUSH_DELAY_MS);
-  });
-  // Tiene que llamarse durante el pedido: mantiene viva la función hasta terminar de guardar.
+  if (!dirty) {
+    dirty = true;
+    dirtySince = Date.now();
+  }
+  seq++;
+  pending.push(changeset && changeset.length ? changeset : null);
+  if (!changeset) note(`sin changeset ${label}`);
+  schedule();
+}
+
+/** Compatibilidad: un cambio sin changeset. */
+export function markDirty() {
+  recordChange(null, "manual");
+}
+
+function savingMode(): boolean {
   try {
-    waitUntil(done);
+    return monthUsage().advanced >= BLOB_QUOTA.advanced * 0.6;
+  } catch {
+    return false;
+  }
+}
+
+function schedule() {
+  if (timer) clearTimeout(timer);
+  const saving = savingMode();
+  const idle = saving ? SAVING_IDLE_MS : IDLE_FLUSH_MS;
+  const max = saving ? SAVING_MAX_MS : MAX_PENDING_MS;
+  const delay = Math.max(0, Math.min(idle, dirtySince + max - Date.now()));
+  timer = setTimeout(() => {
+    timer = null;
+    flush().catch((e) => console.error("[forja] no se pudo guardar la base:", e?.message ?? e));
+  }, delay);
+  (timer as any).unref?.();
+  if (!flushWaiter) {
+    let resolve!: () => void;
+    const promise = new Promise<void>((r) => (resolve = r));
+    flushWaiter = { promise, resolve };
+  }
+  // Mantiene viva la función hasta que se suban los cambios (tiene que llamarse durante el pedido).
+  try {
+    waitUntil(flushWaiter.promise);
   } catch {
     /* fuera de Vercel no hace falta */
   }
 }
 
+function settle() {
+  flushWaiter?.resolve();
+  flushWaiter = null;
+}
+
+/** Sube ya los cambios pendientes. Espera a que no haya pedidos en curso en esta instancia. */
+export async function flush(): Promise<void> {
+  if (!BLOB_MODE || !dirty) return;
+  const release = await acquireRequestSlot();
+  try {
+    await exclusive(flushLocked);
+  } finally {
+    release();
+  }
+}
+
+/** Mes calendario (UTC) para contar operaciones. */
+function monthKey() {
+  return "blob_ops:" + new Date().toISOString().slice(0, 7);
+}
+
+/** Operaciones del mes registradas en la base (aproximado: suma lo que contó cada instancia). */
+export function monthUsage(): { advanced: number; simple: number } {
+  const raw = getDb().prepare("SELECT value FROM settings WHERE key = ?").get(monthKey()) as { value: string } | undefined;
+  const saved = raw ? (JSON.parse(raw.value) as { advanced: number; simple: number }) : { advanced: 0, simple: 0 };
+  return { advanced: saved.advanced + ops.advanced, simple: saved.simple + ops.simple };
+}
+
+/** Anota en la base las operaciones contadas (queda incluido en la subida que sigue). */
+function stampUsage() {
+  const u = monthUsage();
+  u.advanced += 1; // la subida que viene
+  getDb().prepare("INSERT INTO settings(key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(monthKey(), JSON.stringify(u));
+}
+
 /**
- * Sube la base. Si otra instancia guardó en el medio y se tiene el changeset del pedido,
- * se trae la versión remota y se le aplican encima estos cambios (fusión por fila).
+ * Sube la base. Si otra instancia guardó en el medio, se trae su versión y se le aplican encima
+ * los cambios pendientes de esta (fusión por fila). Hay que llamarla sin pedidos a medio camino.
  */
-export function flush(changeset?: Uint8Array | null, label = "diferido"): Promise<void> {
-  if (!BLOB_MODE) return Promise.resolve();
-  return exclusive(async () => {
-    if (!dirty) return;
-    dirty = false;
-    const { put, get, BlobPreconditionFailedError } = await blob();
-    const opts = { access: "private" as const, allowOverwrite: true, addRandomSuffix: false, contentType: "application/octet-stream" };
+async function flushLocked(): Promise<void> {
+  if (!dirty) return settle();
+  if (timer) {
+    clearTimeout(timer);
+    timer = null;
+  }
+  const { put, get } = await blob();
+  const opts = { access: "private" as const, allowOverwrite: true, addRandomSuffix: false, contentType: "application/octet-stream" };
+  try {
     for (let attempt = 0; attempt < 4; attempt++) {
-      try {
-        getDb().exec("PRAGMA wal_checkpoint(TRUNCATE)");
-      } catch {
-        /* sin WAL */
+      // Comparación explícita de versión antes de subir.
+      const remoteTag = await remoteEtag();
+      if (remoteTag === null || remoteTag === etag) {
+        const n = pending.length;
+        stampUsage();
+        try {
+          getDb().exec("PRAGMA wal_checkpoint(TRUNCATE)");
+        } catch {
+          /* sin WAL */
+        }
+        const r = await put(DB_KEY, fs.readFileSync(dbPath()), opts);
+        ops.advanced = 0;
+        ops.simple = 0;
+        etag = normTag(r.etag);
+        lastCheck = Date.now();
+        dirty = false;
+        pending = [];
+        note(`guardado (${n} cambio${n === 1 ? "" : "s"})`);
+        return settle();
       }
       const buf = fs.readFileSync(dbPath());
-      try {
-        // Comparación explícita de versión antes de subir (ifMatch no es confiable con archivos grandes).
-        const remoteTag = await remoteEtag();
-        if (remoteTag !== null && remoteTag !== etag) throw new BlobPreconditionFailedError();
-        const r = await put(DB_KEY, buf, opts);
-        etag = normTag(r.etag);
-        return;
-      } catch (e) {
-        if (!(e instanceof BlobPreconditionFailedError)) {
-          dirty = true;
-          throw e;
+      if (pending.every((c) => c)) {
+        // Fusión: base remota + cambios pendientes de esta instancia, en orden.
+        note(`fusión de ${pending.length} cambio(s)`);
+        await pull(true);
+        let omitted = 0;
+        for (const c of pending) omitted += mergeChangeset(c!);
+        if (omitted) {
+          // Algunas filas chocaron con cambios de otra instancia: se respalda la versión propia.
+          ops.advanced++;
+          await put(`${PREFIX}db/conflictos/${Date.now()}-omitidas${omitted}.db`, buf, opts).catch(() => {});
         }
-        if (changeset && changeset.length) {
-          // Fusión: base remota + cambios de este pedido.
-          note(`fusión ${label}`);
-          await pull(true);
-          const omitted = mergeChangeset(changeset);
-          if (omitted) {
-            // Algunas filas chocaron con cambios de otra instancia: se respalda la versión propia.
-            await put(`${PREFIX}db/conflictos/${Date.now()}-${tag(label)}-omitidas${omitted}.db`, buf, opts).catch(() => {});
-          }
-          continue;
-        }
-        // Sin changeset: se respalda la versión remota y se guarda esta.
-        note(`sin changeset ${label}`);
-        const remote = await get(DB_KEY, { access: "private", useCache: false });
-        if (remote?.statusCode === 200) await put(`${PREFIX}db/conflictos/${Date.now()}-${tag(label)}-sin-changeset.db`, await readStream(remote.stream), opts);
-        const r = await put(DB_KEY, buf, opts);
-        etag = normTag(r.etag);
-        return;
+        continue;
       }
+      // Hay cambios sin changeset: se respalda la versión remota y se guarda esta.
+      note("sin changeset: respaldo y sobrescribo");
+      ops.simple++;
+      const remote = await get(DB_KEY, { access: "private", useCache: false });
+      if (remote?.statusCode === 200) {
+        ops.advanced++;
+        await put(`${PREFIX}db/conflictos/${Date.now()}-sin-changeset.db`, await readStream(remote.stream), opts);
+      }
+      etag = remoteTag; // se toma la remota como base y se sobrescribe en la vuelta siguiente
     }
-    dirty = true;
     throw new Error("No se pudo guardar después de varios intentos");
-  });
+  } catch (e) {
+    note(`error al guardar: ${(e as any)?.message ?? e}`);
+    settle();
+    throw e;
+  }
 }
 
 /**
@@ -213,13 +342,10 @@ export function normTag(t: string | null | undefined): string | null {
   return t ? t.replace(/^W\//, "") : null;
 }
 
-function tag(s: string) {
-  return s.replace(/[^a-z0-9]+/gi, "_").slice(0, 60);
-}
-
 /** Versión actual de la base en el store (null si todavía no existe). */
 async function remoteEtag(): Promise<string | null> {
   const { head } = await blob();
+  ops.simple++;
   try {
     return normTag(((await head(DB_KEY)) as any).etag);
   } catch (e: any) {
@@ -234,7 +360,7 @@ function mergeChangeset(changeset: Uint8Array): number {
   let omitted = 0;
   getDb().applyChangeset(changeset, {
     onConflict: (type: number) => {
-      // DATA: la fila cambió en las dos: gana este pedido (el más reciente).
+      // DATA: la fila cambió en las dos: gana este cambio (el más reciente).
       if (type === constants.SQLITE_CHANGESET_DATA) return constants.SQLITE_CHANGESET_REPLACE;
       // NOTFOUND: la fila ya no está (p. ej. borrada en cascada): no hay nada que perder.
       if (type === constants.SQLITE_CHANGESET_NOTFOUND) return constants.SQLITE_CHANGESET_OMIT;
@@ -255,6 +381,7 @@ function keyFor(localPath: string): string {
 export async function persistFile(localPath: string) {
   if (!BLOB_MODE) return;
   const { put } = await blob();
+  ops.advanced++;
   await put(keyFor(localPath), fs.readFileSync(localPath), { access: "private", allowOverwrite: true, addRandomSuffix: false });
 }
 
@@ -280,6 +407,8 @@ export async function removeFile(localPath: string) {
 export async function takeIncoming(pathname: string): Promise<Buffer> {
   if (!pathname.startsWith(PREFIX + "entrantes/")) throw new Error("Ruta de subida inválida");
   const { get, del } = await blob();
+  ops.advanced++; // la subida desde el navegador
+  ops.simple++;
   const r = await get(pathname, { access: "private", useCache: false });
   if (!r || r.statusCode !== 200) throw new Error("No se encontró el archivo subido");
   const buf = await readStream(r.stream);
@@ -289,10 +418,14 @@ export async function takeIncoming(pathname: string): Promise<Buffer> {
 
 export const INCOMING_PREFIX = PREFIX + "entrantes/";
 
-const INSTANCE = Math.random().toString(36).slice(2, 8);
-
 export function storageInfo() {
-  return { mode: BLOB_MODE ? "blob" : "local", instance: INSTANCE, dirty, active, etag: etag ? etag.slice(-8) : null, lastCheck, events };
+  let usage: { advanced: number; simple: number } | null = null;
+  try {
+    usage = BLOB_MODE ? monthUsage() : null;
+  } catch {
+    usage = null;
+  }
+  return { mode: BLOB_MODE ? "blob" : "local", instance: INSTANCE, dirty, pending: pending.length, active, etag: etag ? etag.slice(-8) : null, lastCheck, events, usage, quota: BLOB_QUOTA, saving: BLOB_MODE && savingMode() };
 }
 
 /**
@@ -310,6 +443,7 @@ export async function cleanupOrphans(referenced: Set<string>): Promise<{ deleted
   let kept = 0;
   let cursor: string | undefined;
   do {
+    ops.advanced++;
     const r = await list({ prefix: PREFIX, cursor, limit: 1000 });
     for (const b of r.blobs) {
       const age = now - new Date(b.uploadedAt).getTime();

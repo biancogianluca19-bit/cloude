@@ -127,8 +127,8 @@ describe("sincronización con Blob", () => {
     other.exec("INSERT INTO settings(key, value) VALUES ('de_la_otra', 'sí')");
     other.close();
     store.set(key, { buf: fs.readFileSync(tmp), etag: "de-otra-instancia" });
-    storage.markDirty();
-    await storage.flush(cs);
+    storage.recordChange(cs);
+    await storage.flush();
     db.closeDb();
     fs.rmSync(db.dbPath(), { force: true });
     await storage.syncBefore(true);
@@ -145,6 +145,41 @@ describe("sincronización con Blob", () => {
     expect(await storage.ensureLocalFile(p)).toBe(true);
     expect(fs.readFileSync(p, "utf8")).toBe("contenido");
     await expect(storage.persistFile("/etc/passwd")).rejects.toThrow(/fuera/);
+  });
+
+  it("agrupa varios cambios en una sola subida y la versión avisa que hay cambios pendientes", async () => {
+    await storage.syncBefore(true);
+    const puts = () => [...store.keys()].length;
+    const { put } = await import("@vercel/blob");
+    const callsBefore = (put as any).mock.calls.length;
+    for (const name of ["A", "B", "C"]) {
+      const session = (db.getDb() as any).createSession();
+      db.run("INSERT INTO subjects(name) VALUES (?)", [name]);
+      storage.recordChange(session.changeset());
+      session.close();
+    }
+    expect(storage.currentVersion()).toMatch(/\|/);
+    await storage.flush();
+    expect((put as any).mock.calls.length - callsBefore).toBe(1);
+    expect(storage.currentVersion()).not.toMatch(/\|/);
+    expect(puts()).toBeGreaterThan(0);
+    expect(storage.storageInfo().usage!.advanced).toBeGreaterThan(0);
+  });
+
+  it("si el navegador vio cambios pendientes de otra instancia, espera a que se suban", async () => {
+    const key = [...store.keys()].find((k) => k.endsWith("db/forja.db"))!;
+    await storage.syncBefore(true);
+    const base = storage.currentVersion()!;
+    // Otra instancia sube su versión 300 ms después.
+    const { DatabaseSync } = await import("node:sqlite");
+    const tmp = path.join(DATA, "otra2.db");
+    fs.writeFileSync(tmp, store.get(key)!.buf);
+    const other = new DatabaseSync(tmp);
+    other.exec("INSERT INTO subjects(name) VALUES ('De la otra')");
+    other.close();
+    setTimeout(() => store.set(key, { buf: fs.readFileSync(tmp), etag: "otra-subio" }), 300);
+    await storage.syncBefore(false, `${base}|otrains.4`);
+    expect(db.get<any>("SELECT name FROM subjects WHERE name = 'De la otra'")).toBeTruthy();
   });
 
   it("solo acepta archivos entrantes del área de subida", async () => {

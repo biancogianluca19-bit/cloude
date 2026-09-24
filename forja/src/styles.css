@@ -1410,3 +1410,23 @@ button.list-item {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Barra de uso (Ajustes → almacenamiento) */
+.meter {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+.meter > div {
+  height: 100%;
+  background: var(--ok);
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+.meter > div.warn {
+  background: var(--warn);
+}
+.meter > div.bad {
+  background: var(--bad);
+}
