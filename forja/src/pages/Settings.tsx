@@ -166,7 +166,7 @@ function CloudUsage() {
           </div>
         );
       })}
-      {info.data.saving && <Callout kind="warn">Modo ahorro activo: los cambios se suben cada uno o dos minutos para no agotar el cupo.</Callout>}
+      {info.data.saving && <Callout kind="warn">Modo ahorro activo: los cambios se suben cada 4 minutos y medio (y al cerrar la app) para no agotar el cupo.</Callout>}
     </div>
   );
 }
