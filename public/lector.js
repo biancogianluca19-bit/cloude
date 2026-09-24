@@ -14,7 +14,7 @@ const Lector = (() => {
     { id: 'hogar', tipo: 'gasto', nombre: 'Casa y servicios', claves: ['alquiler', 'expensas', 'luz', 'gas', 'agua', 'internet', 'wifi', 'cable', 'celular', 'abono', 'telefono', 'edenor', 'edesur', 'metrogas', 'aysa', 'fibertel', 'telecentro', 'movistar', 'limpieza', 'ferreteria', 'mueble', 'muebles', 'plomero', 'electricista', 'lavanderia', 'articulos de limpieza'] },
     { id: 'salud', tipo: 'gasto', nombre: 'Salud y deporte', claves: ['farmacia', 'medico', 'remedio', 'remedios', 'medicamento', 'obra social', 'prepaga', 'osde', 'swiss medical', 'galeno', 'dentista', 'odontologo', 'psicologo', 'psicologa', 'terapia', 'analisis', 'kinesiologo', 'gimnasio', 'gym', 'pilates', 'yoga', 'crossfit', 'padel', 'futbol', 'cancha', 'ibuprofeno', 'consulta'] },
     { id: 'ocio', tipo: 'gasto', nombre: 'Salidas y ocio', claves: ['cine', 'teatro', 'recital', 'show', 'entrada', 'salida', 'boliche', 'juego', 'steam', 'playstation', 'viaje', 'hotel', 'vacaciones', 'escapada', 'museo', 'fiesta', 'previa'] },
-    { id: 'suscripciones', tipo: 'gasto', nombre: 'Suscripciones', claves: ['netflix', 'spotify', 'disney', 'hbo', 'youtube premium', 'amazon prime', 'prime video', 'icloud', 'google one', 'chatgpt', 'claude', 'suscripcion', 'membresia', 'paramount', 'apple music'] },
+    { id: 'suscripciones', tipo: 'gasto', nombre: 'Suscripciones', claves: ['netflix', 'spotify', 'disney', 'hbo', 'youtube premium', 'amazon prime', 'prime video', 'icloud', 'google one', 'chatgpt', 'claude', 'claude pro', 'cloud pro', 'suscripcion', 'membresia', 'paramount', 'apple music'] },
     { id: 'ropa', tipo: 'gasto', nombre: 'Ropa y cuidado', claves: ['ropa', 'zapatillas', 'remera', 'pantalon', 'campera', 'zapatos', 'buzo', 'jean', 'vestido', 'medias', 'camisa', 'peluqueria', 'corte de pelo', 'barberia', 'perfume', 'shampoo', 'maquillaje'] },
     { id: 'educacion', tipo: 'gasto', nombre: 'Educación', claves: ['facultad', 'facu', 'universidad', 'curso', 'libro', 'libros', 'apuntes', 'fotocopias', 'colegio', 'matricula', 'udemy', 'clase particular', 'clases', 'cuota de la facultad', 'materiales'] },
     { id: 'tecnologia', tipo: 'gasto', nombre: 'Tecnología', claves: ['auriculares', 'cargador', 'computadora', 'notebook', 'mouse', 'teclado', 'monitor', 'celular nuevo', 'tablet', 'pendrive', 'impresora', 'funda'] },
@@ -235,7 +235,7 @@ const Lector = (() => {
     for (const re of [RE_ING, RE_GAS, RE_RUIDO]) for (const [a, b] of todos(re, n)) for (let i = a; i < b; i++) mask[i] = true;
     let d = '';
     for (let i = 0; i < seg.length; i++) d += mask[i] ? ' ' : seg[i];
-    d = d.replace(/[$]/g, ' ').replace(/\s+/g, ' ').trim();
+    d = d.replace(/[$]/g, ' ').replace(/\.(?=[A-Za-zÁÉÍÓÚáéíóúÑñ])/g, ' ').replace(/\s+/g, ' ').trim();
     let cambio = true;
     while (cambio && d) {
       cambio = false;

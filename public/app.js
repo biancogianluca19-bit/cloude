@@ -102,6 +102,14 @@
   });
 
   // ---------- Voz del navegador ----------
+  function unirDictado(a, b) {
+    if (!a) return b;
+    if (!b) return a;
+    const na = a.toLowerCase(), nb = b.toLowerCase();
+    if (nb.startsWith(na)) return b;
+    if (na.startsWith(nb) || na.endsWith(nb)) return a;
+    return a + ' ' + b;
+  }
   let rec = null, escuchando = false;
   function iniciarVoz() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -114,13 +122,15 @@
       rec = new SR();
       rec.lang = 'es-AR'; rec.continuous = true; rec.interimResults = true;
       base = $('texto').value.trim();
+      // Chrome en Android repite en cada resultado todo lo dicho antes; se unen sin duplicar.
       rec.onresult = ev => {
         let fin = '', temp = '';
         for (let i = 0; i < ev.results.length; i++) {
-          const r = ev.results[i];
-          if (r.isFinal) fin += r[0].transcript + ' '; else temp += r[0].transcript;
+          const r = ev.results[i], t = r[0].transcript.trim();
+          if (r.isFinal) fin = unirDictado(fin, t); else temp = unirDictado(temp, t);
         }
-        $('texto').value = (base ? base + ' ' : '') + fin + temp;
+        const todo = unirDictado(fin, temp);
+        $('texto').value = (base ? base + ' ' : '') + todo;
       };
       rec.onerror = ev => {
         if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
