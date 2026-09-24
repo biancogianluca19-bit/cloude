@@ -348,6 +348,20 @@ export async function etagProbe() {
   } catch (e: any) {
     grande = "ifMatch falla con 4 MB: " + e?.name;
   }
+  // La base real: ¿coinciden las versiones que informan head, get y esta instancia?
+  const dbHead = await head(DB_KEY).catch(() => null);
+  const dbGet = await get(DB_KEY, { access: "private", useCache: false }).catch(() => null);
+  const copy = fs.existsSync(dbPath()) ? fs.readFileSync(dbPath()) : big;
+  const opts = { access: "private" as const, allowOverwrite: true, addRandomSuffix: false, contentType: "application/octet-stream" };
+  const c1 = await put(key, copy, opts);
+  const c1h = await head(key);
   await del(key).catch(() => {});
-  return { p1: p1.etag, p2: p2.etag, lecturas: out, grande };
+  return {
+    p1: p1.etag,
+    p2: p2.etag,
+    lecturas: out,
+    grande,
+    base: { local: etag, head: (dbHead as any)?.etag ?? null, get: dbGet?.blob.etag ?? null, bytes: copy.length },
+    copia: { put: c1.etag, head: (c1h as any).etag },
+  };
 }
