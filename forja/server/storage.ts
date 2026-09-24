@@ -79,8 +79,24 @@ async function pull(force = false) {
  * Antes de atender un pedido: asegura que la base local esté al día.
  * Las escrituras siempre verifican; las lecturas, como mucho una vez por minuto.
  */
-export async function syncBefore(write: boolean) {
+/** Versión de la base que tiene esta instancia (etag del store). */
+export function currentVersion(): string | null {
+  return etag;
+}
+
+/**
+ * @param write  el pedido puede escribir: siempre se verifica contra el store.
+ * @param seen   última versión que vio el navegador: si no coincide, esta instancia está atrasada.
+ */
+export async function syncBefore(write: boolean, seen?: string | null) {
   if (!BLOB_MODE) return;
+  if (seen && seen !== etag && !dirty) {
+    await exclusive(async () => {
+      if (!dirty && active === 0 && seen !== etag) await pull();
+      loaded = true;
+    });
+    if (!write) return;
+  }
   // Antes de escribir, lo pendiente de esta instancia se sube primero; así, si otra instancia
   // escribió después, se trae su versión sin pisar nada.
   if (write && dirty) await flush();

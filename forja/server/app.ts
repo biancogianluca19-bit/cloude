@@ -21,7 +21,7 @@ import { gradePhoto, savePhoto, photoPathFromToken } from "./ai/photo.ts";
 import { aiAvailable, model, testConnection, DEFAULT_MODEL } from "./ai/llm.ts";
 import { invalidateIndex, search } from "./retrieval/search.ts";
 import { requireAuth, login, logout, authRequired, isAuthed } from "./auth.ts";
-import { BLOB_MODE, syncBefore, markDirty, enterRequest, leaveRequest, persistFile, ensureLocalFile, takeIncoming, INCOMING_PREFIX, storageInfo } from "./storage.ts";
+import { BLOB_MODE, syncBefore, markDirty, flush, currentVersion, enterRequest, leaveRequest, persistFile, ensureLocalFile, takeIncoming, INCOMING_PREFIX, storageInfo } from "./storage.ts";
 import { getDb } from "./db.ts";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 60 * 1024 * 1024, files: 30 } });
@@ -99,29 +99,50 @@ export function createApp() {
   });
 
   // ------------------------------------------------------------ Persistencia (Vercel)
-  // Antes de cada pedido la base local se pone al día; si el pedido la cambió, se guarda.
+  // Antes de cada pedido la base local se pone al día (con la versión que ya vio el navegador);
+  // si el pedido la cambió, se guarda ANTES de responder y la respuesta lleva la versión nueva.
   app.use("/api", async (req, res, next) => {
+    if (!BLOB_MODE) return next();
     try {
-      await syncBefore(req.method !== "GET");
-      const before = BLOB_MODE ? Number((getDb().prepare("SELECT total_changes() n").get() as any).n) : 0;
-      if (BLOB_MODE) enterRequest();
+      const write = req.method !== "GET";
+      await syncBefore(write, (req.headers["x-forja-version"] as string) || null);
+      const changes = () => Number((getDb().prepare("SELECT total_changes() n").get() as any).n);
+      const before = changes();
+      enterRequest();
       let left = false;
       const leave = () => {
-        if (!left && BLOB_MODE) leaveRequest();
+        if (!left) leaveRequest();
         left = true;
       };
       res.on("close", leave);
-      if (BLOB_MODE)
-        res.on("finish", () => {
-          try {
-            // Solo se guarda si el pedido realmente cambió la base.
-            const after = Number((getDb().prepare("SELECT total_changes() n").get() as any).n);
-            if (after !== before) markDirty();
-          } catch {
-            markDirty();
-          }
+      const end = res.end.bind(res) as (...a: any[]) => any;
+      let patched = false;
+      (res as any).end = (...args: any[]) => {
+        if (patched) return end(...args);
+        patched = true;
+        let changed = false;
+        try {
+          changed = changes() !== before;
+        } catch {
+          changed = true;
+        }
+        const finish = () => {
+          const v = currentVersion();
+          if (v && !res.headersSent) res.setHeader("x-forja-version", v);
           leave();
-        });
+          return end(...args);
+        };
+        if (!changed) return finish();
+        if (res.headersSent) {
+          markDirty();
+          return finish();
+        }
+        markDirty();
+        flush()
+          .catch((e) => console.error("[forja] no se pudo guardar:", e?.message ?? e))
+          .finally(finish);
+        return res;
+      };
       next();
     } catch (e) {
       next(e);

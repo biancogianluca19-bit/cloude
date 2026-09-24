@@ -8,6 +8,26 @@ export class ApiError extends Error {
   }
 }
 
+// Versión de la base que ya vio este navegador (versión publicada). Se reenvía en cada pedido
+// para que ninguna instancia del servidor responda con datos más viejos.
+let version: string | null = null;
+const _fetch = window.fetch.bind(window);
+window.fetch = async (input: RequestInfo | URL, init: RequestInit = {}) => {
+  const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+  const same = url.startsWith("/api/") || url.startsWith(location.origin + "/api/");
+  if (same && version) {
+    const h = new Headers(init.headers ?? (input instanceof Request ? input.headers : undefined));
+    h.set("x-forja-version", version);
+    init = { ...init, headers: h };
+  }
+  const res = await _fetch(input, init);
+  if (same) {
+    const v = res.headers.get("x-forja-version");
+    if (v) version = v;
+  }
+  return res;
+};
+
 async function parse(res: Response) {
   const ct = res.headers.get("content-type") ?? "";
   const body = ct.includes("json") ? await res.json() : await res.text();
