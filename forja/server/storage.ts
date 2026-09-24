@@ -169,7 +169,10 @@ export function flush(changeset?: Uint8Array | null, label = "diferido"): Promis
       }
       const buf = fs.readFileSync(dbPath());
       try {
-        const r = await put(DB_KEY, buf, { ...opts, ...(etag ? { ifMatch: etag } : {}) });
+        // Comparación explícita de versión antes de subir (ifMatch no es confiable con archivos grandes).
+        const remoteTag = await remoteEtag();
+        if (remoteTag !== null && remoteTag !== etag) throw new BlobPreconditionFailedError();
+        const r = await put(DB_KEY, buf, opts);
         etag = r.etag;
         return;
       } catch (e) {
@@ -206,6 +209,17 @@ function tag(s: string) {
   return s.replace(/[^a-z0-9]+/gi, "_").slice(0, 60);
 }
 
+/** Versión actual de la base en el store (null si todavía no existe). */
+async function remoteEtag(): Promise<string | null> {
+  const { head } = await blob();
+  try {
+    return ((await head(DB_KEY)) as any).etag ?? null;
+  } catch (e: any) {
+    if (e?.name === "BlobNotFoundError") return null;
+    throw e;
+  }
+}
+
 /** Aplica un changeset sobre la base local. Devuelve cuántos cambios se omitieron por conflicto. */
 function mergeChangeset(changeset: Uint8Array): number {
   const { constants } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
@@ -214,6 +228,8 @@ function mergeChangeset(changeset: Uint8Array): number {
     onConflict: (type: number) => {
       // DATA: la fila cambió en las dos: gana este pedido (el más reciente).
       if (type === constants.SQLITE_CHANGESET_DATA) return constants.SQLITE_CHANGESET_REPLACE;
+      // NOTFOUND: la fila ya no está (p. ej. borrada en cascada): no hay nada que perder.
+      if (type === constants.SQLITE_CHANGESET_NOTFOUND) return constants.SQLITE_CHANGESET_OMIT;
       omitted++;
       return constants.SQLITE_CHANGESET_OMIT;
     },
@@ -322,6 +338,16 @@ export async function etagProbe() {
     out.push({ ms: i * 700, getSinCache: gNo?.blob.etag === p2.etag, getConCache: gSi?.blob.etag === p2.etag, head: (h as any).etag === p2.etag });
     await new Promise((r) => setTimeout(r, 700));
   }
+  // Mismo experimento con un archivo grande.
+  const big = Buffer.alloc(4 * 1024 * 1024, 7);
+  const b1 = await put(key, big, { access: "private", allowOverwrite: true, addRandomSuffix: false });
+  let grande = "";
+  try {
+    await put(key, big, { access: "private", allowOverwrite: true, addRandomSuffix: false, ifMatch: b1.etag });
+    grande = "ifMatch ok con 4 MB";
+  } catch (e: any) {
+    grande = "ifMatch falla con 4 MB: " + e?.name;
+  }
   await del(key).catch(() => {});
-  return { p1: p1.etag, p2: p2.etag, lecturas: out };
+  return { p1: p1.etag, p2: p2.etag, lecturas: out, grande };
 }

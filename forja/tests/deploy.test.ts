@@ -27,6 +27,15 @@ vi.mock("@vercel/blob", () => ({
     return { statusCode: 200, stream: new Blob([new Uint8Array(cur.buf)]).stream(), blob: { etag: cur.etag } };
   }),
   del: vi.fn(async (key: string) => void store.delete(key)),
+  head: vi.fn(async (key: string) => {
+    const cur = store.get(key);
+    if (!cur) {
+      const e: any = new Error("no existe");
+      e.name = "BlobNotFoundError";
+      throw e;
+    }
+    return { etag: cur.etag, pathname: key };
+  }),
 }));
 vi.mock("@vercel/functions", () => ({ waitUntil: () => {} }));
 
