@@ -101,10 +101,29 @@ export function SettingsPage() {
           Cambiar a {theme === "dark" ? "claro" : "oscuro"}
         </button>
       </div>
+      {status.data?.auth && (
+        <div className="card pad mt-16 row between">
+          <div>
+            <h3>Sesión</h3>
+            <p className="muted small">La sesión dura 60 días en este dispositivo.</p>
+          </div>
+          <button
+            className="btn"
+            onClick={async () => {
+              await api.post("/api/logout");
+              window.location.reload();
+            }}
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      )}
       <div className="card pad mt-16">
         <h3>Usar FORJA desde el celular</h3>
         <p className="muted small mt-8">
-          Con el servidor corriendo en tu computadora, abrí en el celular la dirección que muestra la terminal al iniciar (por ejemplo http://192.168.0.10:3717), conectado a la misma red wifi. Desde el menú del navegador podés agregarla a la pantalla de inicio.
+          {status.data?.storage === "blob"
+            ? "Esta es la versión publicada: abrí la misma dirección desde el celular e iniciá sesión. Desde el menú del navegador podés agregarla a la pantalla de inicio."
+            : "Con el servidor corriendo en tu computadora, abrí en el celular la dirección que muestra la terminal al iniciar (por ejemplo http://192.168.0.10:3717), conectado a la misma red wifi. Desde el menú del navegador podés agregarla a la pantalla de inicio."}
         </p>
       </div>
     </div>

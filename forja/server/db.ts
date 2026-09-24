@@ -8,7 +8,6 @@ export const DATA_DIR = path.resolve(process.env.FORJA_DATA_DIR ?? path.join(pro
 export const UPLOAD_DIR = path.join(DATA_DIR, "uploads");
 
 const SCHEMA = `
-PRAGMA journal_mode = WAL;
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
@@ -230,12 +229,19 @@ CREATE TABLE IF NOT EXISTS reading_events (
 
 let db: DatabaseSync | null = null;
 
+export function dbPath(): string {
+  return process.env.FORJA_DB ?? path.join(DATA_DIR, "forja.db");
+}
+
 export function getDb(): DatabaseSync {
   if (db) return db;
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-  const file = process.env.FORJA_DB ?? path.join(DATA_DIR, "forja.db");
+  const file = dbPath();
   const { DatabaseSync: Db } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
   db = new Db(file);
+  // En Vercel la base se copia entera al store: sin WAL el archivo siempre está completo.
+  const journal = process.env.FORJA_JOURNAL ?? (process.env.BLOB_READ_WRITE_TOKEN ? "DELETE" : "WAL");
+  db.exec(`PRAGMA journal_mode = ${journal === "DELETE" ? "DELETE" : "WAL"};`);
   db.exec(SCHEMA);
   return db;
 }

@@ -11,8 +11,27 @@ export class ApiError extends Error {
 async function parse(res: Response) {
   const ct = res.headers.get("content-type") ?? "";
   const body = ct.includes("json") ? await res.json() : await res.text();
-  if (!res.ok) throw new ApiError((body && body.error) || `Error ${res.status}`, res.status);
+  if (res.status === 401 && body && body.auth) window.dispatchEvent(new Event("forja-auth"));
+  if (!res.ok) throw new ApiError((body && body.error) || (res.status === 413 ? "El archivo es demasiado grande para enviarlo así." : `Error ${res.status}`), res.status);
   return body;
+}
+
+/** Achica fotos antes de subirlas (las del celular pesan varios MB). */
+export async function shrinkImage(file: File, max = 2000, quality = 0.85): Promise<File> {
+  if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size < 900_000) return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bmp.width * k);
+    canvas.height = Math.round(bmp.height * k);
+    canvas.getContext("2d")!.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    const blob: Blob | null = await new Promise((r) => canvas.toBlob(r, "image/jpeg", quality));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" });
+  } catch {
+    return file;
+  }
 }
 
 export const api = {

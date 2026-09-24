@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Upload, FileText, FileSpreadsheet, Presentation, Image as ImageIcon, ShieldAlert, ShieldCheck, Trash2, RefreshCw, Sparkles, EyeOff, Eye } from "lucide-react";
-import { api, useApi, emitChange, relTime } from "../api";
+import { api, useApi, emitChange, relTime, shrinkImage } from "../api";
 import { useSid } from "../App";
 import { DropZone, Loading, ErrorBox, Modal, useToast, Spinner, Callout, Empty } from "../ui";
 
@@ -23,6 +23,7 @@ export function MaterialPage() {
   const alerts = useApi<any[]>(`/api/subjects/${sid}/alerts`);
   const kinds = useApi<Record<string, string>>("/api/kinds");
   const demo = useApi<string[]>("/api/demo-files");
+  const status = useApi<any>("/api/status");
   const [busy, setBusy] = useState<string | null>(null);
   const [results, setResults] = useState<any[] | null>(null);
   const [openFile, setOpenFile] = useState<number | null>(null);
@@ -50,13 +51,33 @@ export function MaterialPage() {
     })();
   }, [params, files.data]);
 
-  const upload = async (list: File[]) => {
-    const fd = new FormData();
-    list.forEach((f) => fd.append("files", f));
-    setBusy(`Procesando ${list.length} archivo(s): extracción, security scan, temas y perfil del profesor…`);
+  const upload = async (raw: File[]) => {
     setResults(null);
     try {
-      const r = await api.upload(`/api/subjects/${sid}/files`, fd);
+      const list = await Promise.all(raw.map((f) => shrinkImage(f)));
+      let r: any;
+      if (status.data?.storage === "blob") {
+        // Versión publicada: cada archivo va directo al almacenamiento privado y después se procesa.
+        const { upload: direct } = await import("@vercel/blob/client");
+        const items: { pathname: string; name: string }[] = [];
+        for (let i = 0; i < list.length; i++) {
+          const f = list[i];
+          setBusy(`Subiendo ${i + 1} de ${list.length}: ${f.name}…`);
+          const b = await direct(`forja/entrantes/${f.name.replace(/[^\w.\-]+/g, "_")}`, f, {
+            access: "private",
+            handleUploadUrl: "/api/blob/upload",
+            multipart: f.size > 8 * 1024 * 1024,
+          });
+          items.push({ pathname: b.pathname, name: f.name });
+        }
+        setBusy(`Procesando ${list.length} archivo(s): extracción, security scan, temas y perfil del profesor…`);
+        r = await api.post(`/api/subjects/${sid}/files/incoming`, { items });
+      } else {
+        const fd = new FormData();
+        list.forEach((f) => fd.append("files", f));
+        setBusy(`Procesando ${list.length} archivo(s): extracción, security scan, temas y perfil del profesor…`);
+        r = await api.upload(`/api/subjects/${sid}/files`, fd);
+      }
       setResults(r.results);
       const bad = r.results.filter((x: any) => !x.ok).length;
       toast(bad ? `${r.results.length - bad} procesado(s), ${bad} con error` : `${r.results.length} archivo(s) procesado(s)`, bad ? "bad" : undefined);

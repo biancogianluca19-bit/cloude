@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Lightbulb, Camera, FileSpreadsheet, Download, Upload, Send, CheckCircle2, XCircle, CornerDownRight, Copy, GraduationCap, BookMarked, Bug, RotateCcw, ArrowRight, Eye } from "lucide-react";
-import { api, emitChange, pct } from "../api";
+import { api, emitChange, pct, shrinkImage } from "../api";
 import { Callout, ScoreRing, Bar, toneFor, useToast, SourceCard, Spinner, Modal, DropZone } from "../ui";
 
 export const SOURCE_LABEL: Record<string, string> = {
@@ -116,7 +116,7 @@ export function ExerciseView({ ex, sid, examMode, value, onChange, onGraded, onN
 
   const uploadPhoto = async (files: File[]) => {
     const fd = new FormData();
-    fd.append("photo", files[0]);
+    fd.append("photo", await shrinkImage(files[0]));
     setBusy(true);
     try {
       const r = await api.upload(`/api/exercises/${ex.id}/photo`, fd);

@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import "./styles.css";
 import { App } from "./App";
 import { ToastProvider } from "./ui";
+import { AuthGate } from "./Login";
 
 // Tema: el guardado por el usuario o el del sistema.
 const saved = (() => {
@@ -19,7 +20,9 @@ createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <ToastProvider>
-        <App />
+        <AuthGate>
+          <App />
+        </AuthGate>
       </ToastProvider>
     </BrowserRouter>
   </React.StrictMode>,

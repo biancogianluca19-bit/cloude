@@ -10,8 +10,7 @@ const MEDIA: Record<string, string> = { png: "image/png", jpg: "image/jpeg", jpe
 /** Las fotos se referencian por nombre de archivo; nunca se acepta una ruta enviada por el cliente. */
 export function photoPathFromToken(token: unknown): string | undefined {
   if (typeof token !== "string" || !/^ej\d+-\d+\.(png|jpe?g|webp|gif)$/.test(token)) return undefined;
-  const p = path.join(UPLOAD_DIR, "fotos", token);
-  return fs.existsSync(p) ? p : undefined;
+  return path.join(UPLOAD_DIR, "fotos", token);
 }
 
 export function savePhoto(exerciseId: number, name: string, buf: Buffer): string {

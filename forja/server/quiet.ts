@@ -6,3 +6,4 @@ const original = process.emitWarning.bind(process);
   if ((type === "ExperimentalWarning" || warning?.name === "ExperimentalWarning") && /SQLite/i.test(text)) return;
   return original(warning, ...args);
 };
+export {};

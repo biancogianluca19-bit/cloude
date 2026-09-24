@@ -20,6 +20,9 @@ import { startSession, sessionState, nextTask, endSession } from "./learning/ses
 import { gradePhoto, savePhoto, photoPathFromToken } from "./ai/photo.ts";
 import { aiAvailable, model, testConnection, DEFAULT_MODEL } from "./ai/llm.ts";
 import { invalidateIndex, search } from "./retrieval/search.ts";
+import { requireAuth, login, logout, authRequired, isAuthed } from "./auth.ts";
+import { BLOB_MODE, syncBefore, markDirty, persistFile, ensureLocalFile, takeIncoming, INCOMING_PREFIX, storageInfo } from "./storage.ts";
+import { getDb } from "./db.ts";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 60 * 1024 * 1024, files: 30 } });
 
@@ -64,10 +67,60 @@ export async function refreshSubject(subjectId: number) {
 
 export function createApp() {
   const app = express();
+  app.set("trust proxy", true);
   app.use(express.json({ limit: "5mb" }));
 
+  // ------------------------------------------------------------ Acceso
+  app.get("/api/auth", (req, res) => res.json({ required: authRequired(), ok: isAuthed(req) }));
+  app.post("/api/login", login);
+  app.post("/api/logout", logout);
+  app.use(requireAuth);
+
+  // Subida directa del navegador al store (archivos grandes). La valida el propio handler:
+  // pedir un token exige sesión; el aviso de "subida terminada" viene firmado por Vercel Blob.
+  app.post("/api/blob/upload", async (req, res, next) => {
+    try {
+      if (!BLOB_MODE) return res.status(400).json({ error: "La subida directa solo existe en la versión publicada." });
+      if (req.body?.type === "blob.generate-client-token" && !isAuthed(req)) return res.status(401).json({ error: "Iniciá sesión." });
+      const { handleUpload } = await import("@vercel/blob/client");
+      const out = await handleUpload({
+        body: req.body,
+        request: req,
+        onBeforeGenerateToken: async (pathname) => {
+          if (!pathname.startsWith(INCOMING_PREFIX)) throw new Error("Ruta inválida");
+          return { addRandomSuffix: true, maximumSizeInBytes: 200 * 1024 * 1024 };
+        },
+        onUploadCompleted: async () => {},
+      });
+      res.json(out);
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  // ------------------------------------------------------------ Persistencia (Vercel)
+  // Antes de cada pedido la base local se pone al día; si el pedido la cambió, se guarda.
+  app.use("/api", async (req, res, next) => {
+    try {
+      await syncBefore(req.method !== "GET");
+      const before = BLOB_MODE ? Number((getDb().prepare("SELECT total_changes() n").get() as any).n) : 0;
+      if (BLOB_MODE)
+        res.on("finish", () => {
+          try {
+            const after = Number((getDb().prepare("SELECT total_changes() n").get() as any).n);
+            if (after !== before || req.method !== "GET") markDirty();
+          } catch {
+            markDirty();
+          }
+        });
+      next();
+    } catch (e) {
+      next(e);
+    }
+  });
+
   // ------------------------------------------------------------ Estado y ajustes
-  app.get("/api/status", h(() => ({ ai: aiAvailable(), model: model(), demo: !aiAvailable(), keySource: process.env.ANTHROPIC_API_KEY ? "entorno" : getSetting("anthropic_api_key") ? "ajustes" : null })));
+  app.get("/api/status", h(() => ({ ai: aiAvailable(), model: model(), demo: !aiAvailable(), keySource: process.env.ANTHROPIC_API_KEY ? "entorno" : getSetting("anthropic_api_key") ? "ajustes" : null, storage: storageInfo().mode, auth: authRequired() })));
   app.put(
     "/api/settings",
     h((req) => {
@@ -154,6 +207,7 @@ export function createApp() {
         const name = fixName(f.originalname);
         try {
           const fid = storeUpload(sid, name, f.buffer, f.mimetype);
+          await persistFile(get<any>("SELECT path FROM files WHERE id = ?", [fid])!.path);
           const r = await processFile(fid);
           results.push({ name, ok: true, ...r });
         } catch (e: any) {
@@ -164,6 +218,30 @@ export function createApp() {
       return { results };
     }),
   );
+  // Archivos subidos directo al store desde el navegador.
+  app.post(
+    "/api/subjects/:id/files/incoming",
+    h(async (req) => {
+      const sid = id(req);
+      subjectOr404(sid);
+      const items: { pathname: string; name: string }[] = req.body?.items ?? [];
+      if (!items.length) throw Object.assign(new Error("No llegó ningún archivo."), { status: 400 });
+      const results: any[] = [];
+      for (const it of items) {
+        try {
+          const buf = await takeIncoming(String(it.pathname));
+          const fid = storeUpload(sid, String(it.name), buf);
+          await persistFile(get<any>("SELECT path FROM files WHERE id = ?", [fid])!.path);
+          results.push({ name: it.name, ok: true, ...(await processFile(fid)) });
+        } catch (e: any) {
+          results.push({ name: it.name, ok: false, error: e.message });
+        }
+      }
+      await refreshSubject(sid);
+      return { results };
+    }),
+  );
+
   app.get(
     "/api/files/:id",
     h((req) => {
@@ -176,10 +254,10 @@ export function createApp() {
       return { ...rest, chunks, alerts, cells };
     }),
   );
-  app.get("/api/files/:id/raw", (req, res, next) => {
+  app.get("/api/files/:id/raw", async (req, res, next) => {
     try {
       const f = get<any>("SELECT * FROM files WHERE id = ?", [id(req)]);
-      if (!f || !fs.existsSync(f.path)) return res.status(404).json({ error: "No encontrado" });
+      if (!f || !(await ensureLocalFile(f.path))) return res.status(404).json({ error: "No encontrado" });
       res.setHeader("Content-Disposition", `inline; filename*=UTF-8''${encodeURIComponent(f.name)}`);
       res.sendFile(path.resolve(f.path));
     } catch (e) {
@@ -466,17 +544,18 @@ export function createApp() {
       const f = req.file;
       if (!f) throw Object.assign(new Error("No llegó la foto."), { status: 400 });
       const p = savePhoto(eid, fixName(f.originalname), f.buffer);
+      await persistFile(p);
       return gradePhoto(eid, p);
     }),
   );
-  app.get("/api/photo-token/:token", (req, res) => {
+  app.get("/api/photo-token/:token", async (req, res) => {
     const p = photoPathFromToken(req.params.token);
-    if (!p) return res.status(404).end();
+    if (!p || !(await ensureLocalFile(p))) return res.status(404).end();
     res.sendFile(path.resolve(p));
   });
-  app.get("/api/photos/:attempt", (req, res) => {
+  app.get("/api/photos/:attempt", async (req, res) => {
     const a = get<any>("SELECT photo_path FROM attempts WHERE id = ?", [Number(req.params.attempt)]);
-    if (!a?.photo_path || !fs.existsSync(a.photo_path)) return res.status(404).end();
+    if (!a?.photo_path || !(await ensureLocalFile(a.photo_path))) return res.status(404).end();
     res.sendFile(path.resolve(a.photo_path));
   });
   app.get("/api/exercises/:id/excel", (req, res, next) => {

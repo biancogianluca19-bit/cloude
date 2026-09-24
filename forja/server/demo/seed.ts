@@ -3,6 +3,7 @@ import path from "node:path";
 import { get, run } from "../db.ts";
 import { storeUpload, processFile } from "../ingest/pipeline.ts";
 import { refreshSubject } from "../app.ts";
+import { persistFile } from "../storage.ts";
 
 export const DEMO_DIR = path.resolve(process.env.FORJA_DEMO_DIR ?? path.join(process.cwd(), "demo-material"));
 
@@ -16,6 +17,7 @@ export async function loadDemoFiles(subjectId: number) {
   const results = [];
   for (const f of demoFiles()) {
     const fid = storeUpload(subjectId, f, fs.readFileSync(path.join(DEMO_DIR, f)));
+    await persistFile(get<any>("SELECT path FROM files WHERE id = ?", [fid])!.path);
     results.push({ name: f, ...(await processFile(fid)) });
   }
   await refreshSubject(subjectId);

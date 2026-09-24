@@ -15,10 +15,13 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "demo:files": "tsx scripts/make-demo-files.ts",
-    "e2e": "tsx scripts/e2e-browser.ts"
+    "e2e": "tsx scripts/e2e-browser.ts",
+    "build:vercel": "vite build && tsx scripts/build-vercel.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
+    "@vercel/blob": "^2.8.0",
+    "@vercel/functions": "^3.9.9",
     "express": "^5.2.1",
     "fast-xml-parser": "^5.11.1",
     "jszip": "^3.10.2",
@@ -37,9 +40,11 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/supertest": "^7.2.1",
+    "@vercel/nft": "^1.11.0",
     "@vitejs/plugin-react": "^6.1.1",
     "concurrently": "^10.0.5",
     "docx": "^9.7.2",
+    "esbuild": "^0.28.2",
     "lucide-react": "^1.47.0",
     "pdf-lib": "^1.17.1",
     "playwright": "^1.63.0",

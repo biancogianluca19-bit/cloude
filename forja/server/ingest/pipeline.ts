@@ -8,6 +8,7 @@ import { invalidateIndex } from "../retrieval/search.ts";
 import { assignTopics } from "../learning/topics.ts";
 import { ocrImage, ocrPdf } from "./ocr.ts";
 import { normalize } from "../retrieval/text.ts";
+import { ensureLocalFile, removeFile } from "../storage.ts";
 
 export type FileKind = "parcial" | "resuelto" | "corregido" | "teoria" | "ejercicios" | "apunte" | "planilla";
 
@@ -96,6 +97,7 @@ export async function processFile(fileId: number, opts: { kind?: FileKind } = {}
   const file = get<any>("SELECT * FROM files WHERE id = ?", [fileId]);
   if (!file) throw new Error("Archivo inexistente");
   try {
+    if (!(await ensureLocalFile(file.path))) throw new Error("No se encontró el archivo original.");
     let ex = await extractFile(file.path, file.ext);
     const warnings = [...ex.warnings];
     if (ex.needsOcr) {
@@ -249,6 +251,7 @@ export function deleteFile(fileId: number) {
   } catch {
     /* ya no estaba */
   }
+  void removeFile(f.path);
   invalidateIndex(f.subject_id);
 }
 
