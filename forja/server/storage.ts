@@ -306,21 +306,22 @@ export async function cleanupOrphans(referenced: Set<string>): Promise<{ deleted
   return { deleted: toDelete.length, kept, byKind, recentConflicts: conflicts.sort().slice(-25) };
 }
 
-/** Diagnóstico: compara los etags que devuelven put, head y get para el mismo objeto. */
+/** Diagnóstico: ¿get/head devuelven la versión nueva inmediatamente después de sobrescribir? */
 export async function etagProbe() {
   if (!BLOB_MODE) return null;
   const { put, head, get, del } = await blob();
   const key = PREFIX + "diagnostico/etag.txt";
-  const p = await put(key, "x" + Date.now(), { access: "private", allowOverwrite: true, addRandomSuffix: false });
-  const h = await head(key);
-  const g = await get(key, { access: "private", useCache: false });
-  let conditional = "sin probar";
-  try {
-    await put(key, "y", { access: "private", allowOverwrite: true, addRandomSuffix: false, ifMatch: g?.blob.etag });
-    conditional = "ok con etag de get";
-  } catch (e: any) {
-    conditional = "falla con etag de get: " + e?.name;
+  const out: any[] = [];
+  const p1 = await put(key, "uno" + Date.now(), { access: "private", allowOverwrite: true, addRandomSuffix: false });
+  const g1 = await get(key, { access: "private", useCache: false });
+  const p2 = await put(key, "dos" + Date.now(), { access: "private", allowOverwrite: true, addRandomSuffix: false, ifMatch: g1?.blob.etag });
+  for (let i = 0; i < 4; i++) {
+    const gNo = await get(key, { access: "private", useCache: false });
+    const gSi = await get(key, { access: "private" });
+    const h = await head(key);
+    out.push({ ms: i * 700, getSinCache: gNo?.blob.etag === p2.etag, getConCache: gSi?.blob.etag === p2.etag, head: (h as any).etag === p2.etag });
+    await new Promise((r) => setTimeout(r, 700));
   }
   await del(key).catch(() => {});
-  return { put: p.etag, head: (h as any).etag, get: g?.blob.etag, conditional };
+  return { p1: p1.etag, p2: p2.etag, lecturas: out };
 }
