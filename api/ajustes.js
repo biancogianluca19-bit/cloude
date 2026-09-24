@@ -1,10 +1,12 @@
 // GET  /api/ajustes                         palabras aprendidas y presupuestos
 // POST /api/ajustes {aprender?, olvidar?, presupuestos?}
-const datos = require('../lib/datos');
-const { responder, autorizado, leerJSON } = require('../lib/http');
+const { datosDe } = require('../lib/datos');
+const { responder, sesionDe, leerJSON } = require('../lib/http');
 
 module.exports = async (req, res) => {
-  if (!autorizado(req, res)) return;
+  const sesion = await sesionDe(req, res);
+  if (!sesion) return;
+  const datos = datosDe(sesion.usuario);
   try {
     if (req.method === 'POST') {
       const b = await leerJSON(req);

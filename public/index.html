@@ -40,14 +40,31 @@
     </div>
   </header>
 
-  <section class="card" id="login" hidden aria-labelledby="login-h">
+  <section class="card acceso" id="login" hidden aria-labelledby="login-h">
+    <div class="tabs acceso-tabs" role="group" aria-label="Acceso">
+      <button type="button" id="tab-entrar" aria-pressed="true">Entrar</button>
+      <button type="button" id="tab-crear" aria-pressed="false">Crear cuenta</button>
+    </div>
     <h2 id="login-h">Entrá a tu libreta</h2>
-    <p class="hint">Escribí tu clave de la libreta. Queda guardada en este navegador y no te la vuelve a pedir.</p>
-    <form id="login-form" class="fila">
-      <input type="password" id="clave" autocomplete="current-password" placeholder="Clave" class="campo" required>
-      <button type="submit" class="btn primario">Entrar</button>
+    <p class="hint" id="login-hint">Cada cuenta tiene sus propios movimientos. Nadie más los ve.</p>
+    <form id="login-form" class="acceso-form">
+      <label for="acc-nombre" id="acc-nombre-l" hidden>Tu nombre<input id="acc-nombre" autocomplete="name" placeholder="Ej.: Juan" class="campo"></label>
+      <label for="acc-usuario">Usuario<input id="acc-usuario" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Ej.: juanperez" class="campo" required></label>
+      <label for="acc-contrasena">Contraseña<input type="password" id="acc-contrasena" autocomplete="current-password" placeholder="Al menos 6 caracteres" class="campo" required minlength="6"></label>
+      <button type="submit" class="btn primario" id="acc-enviar">Entrar</button>
     </form>
     <p class="aviso warn" id="login-error" hidden></p>
+  </section>
+
+  <section class="card traspaso" id="traspaso" hidden aria-labelledby="traspaso-h">
+    <div>
+      <h2 id="traspaso-h">Pasá tus movimientos anteriores a esta cuenta</h2>
+      <p>En este celular hay una libreta de antes de las cuentas. Pasala a <b id="traspaso-u"></b> para no perder nada. Se hace una sola vez.</p>
+    </div>
+    <div class="fila">
+      <button type="button" class="btn" id="btn-traspaso-no">No son míos</button>
+      <button type="button" class="btn primario" id="btn-traspaso">Pasar a mi cuenta</button>
+    </div>
   </section>
 
   <section class="card instalar" id="instalar" hidden aria-labelledby="instalar-h">
@@ -135,12 +152,22 @@
     <details class="ajustes" id="ajustes">
       <summary>Ajustes y exportar</summary>
       <div class="cuerpo">
+        <div class="cuenta-fila"><span>Cuenta: <b id="cuenta-nombre"></b> <span class="num" id="cuenta-usuario"></span></span>
+          <button type="button" class="btn chico" id="btn-salir">Cerrar sesión</button></div>
+        <div class="fila">
+          <button type="button" class="btn chico primario" id="btn-telegram">Vincular Telegram</button>
+          <button type="button" class="btn chico" id="btn-cambiar">Cambiar contraseña</button>
+          <a class="btn chico" href="/descargar/libreta-de-plata.apk" download>Descargar app para Android (APK)</a>
+        </div>
+        <form id="cambiar-form" class="acceso-form" hidden>
+          <label for="cc-actual">Contraseña actual<input type="password" id="cc-actual" autocomplete="current-password" class="campo" required></label>
+          <label for="cc-nueva">Contraseña nueva<input type="password" id="cc-nueva" autocomplete="new-password" class="campo" required minlength="6"></label>
+          <button type="submit" class="btn primario chico">Guardar contraseña</button>
+        </form>
         <div id="aprendidas-txt"></div>
         <div class="fila">
           <button type="button" class="btn chico" id="btn-olvidar">Olvidar palabras aprendidas</button>
           <button type="button" class="btn chico" id="btn-csv">Exportar mes a CSV</button>
-          <button type="button" class="btn chico" id="btn-salir">Cerrar sesión en este navegador</button>
-          <a class="btn chico" href="/descargar/libreta-de-plata.apk" download>Descargar app para Android (APK)</a>
         </div>
         <div class="aviso">Al bot le podés escribir <b>resumen</b>, <b>presupuesto</b>, <b>presupuesto súper 200 mil</b> o <b>deshacer</b>. Lo que anotes ahí aparece acá al volver a la página.</div>
       </div>

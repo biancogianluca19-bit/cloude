@@ -275,3 +275,16 @@ details.ajustes summary { cursor: pointer; font-weight: 600; font-family: var(--
 .instalar h2 { font-family: var(--f-display); font-size: 17px; margin: 0 0 2px; }
 .instalar p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 46ch; }
 a.btn { text-decoration: none; color: var(--ink); }
+
+/* Acceso y cuenta */
+.acceso { display: flex; flex-direction: column; gap: 4px; }
+.acceso-tabs { align-self: flex-start; margin-bottom: 12px; }
+.acceso-form { display: flex; flex-direction: column; gap: 10px; max-width: 420px; margin-top: 6px; }
+.acceso-form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--ink-2); font-weight: 500; }
+.acceso-form .btn { align-self: flex-start; }
+.traspaso { display: flex; align-items: center; justify-content: space-between; gap: 12px 16px; flex-wrap: wrap; background: var(--warn-soft); border-color: transparent; }
+.traspaso h2 { font-family: var(--f-display); font-size: 17px; margin: 0 0 2px; }
+.traspaso p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 52ch; }
+.cuenta-fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; color: var(--ink); }
+.cuenta-fila .num { color: var(--muted); font-size: 13px; }
+.acceso-form .campo { flex: none; width: 100%; }

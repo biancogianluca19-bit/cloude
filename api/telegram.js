@@ -1,9 +1,11 @@
 // Webhook del bot de Telegram.
-// Para vincular tu chat: abrí t.me/<tu_bot>?start=<CLAVE_WEB> (o mandale "/start <CLAVE_WEB>").
-// Después, cada audio o texto se anota en la libreta.
-const datos = require('../lib/datos');
+// Cada chat se vincula con una cuenta desde la web (Ajustes → Vincular Telegram),
+// que abre t.me/<bot>?start=<código>. Después, cada audio o texto se anota en esa cuenta.
+const { datosDe, marcarMensaje } = require('../lib/datos');
+const cuentas = require('../lib/cuentas');
 const { crearBot, AYUDA } = require('../lib/bot');
 const { iguales, hoyAR, leerJSON } = require('../lib/http');
+const URL_WEB = () => process.env.URL_WEB || '';
 const { transcribir } = require('../lib/transcribir');
 
 const API = () => `https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}`;
@@ -35,20 +37,19 @@ async function atender(msg) {
   const chatId = String(msg.chat.id);
   const texto0 = (msg.text || '').trim();
 
-  // Vincular el chat con la clave de la web.
+  // Vincular el chat con una cuenta usando el código que da la web.
   const mStart = texto0.match(/^\/start(?:@\w+)?\s*(\S*)/);
-  const vinculados = await datos.chatsTelegram();
-  if (!vinculados.includes(chatId)) {
-    if (mStart && process.env.CLAVE_WEB && mStart[1] && iguales(mStart[1], process.env.CLAVE_WEB)) {
-      await datos.vincularTelegram(chatId);
-      return enviar(chatId, '¡Listo! Tu chat quedó vinculado con la libreta.\n\n' + AYUDA);
-    }
-    console.warn('Chat de Telegram sin vincular:', chatId);
-    return enviar(chatId, 'Este bot es privado. Para usarlo, mandá /start seguido de tu clave de la libreta.');
+  if (mStart && mStart[1]) {
+    const u = await cuentas.vincularChat(mStart[1], chatId);
+    if (u) return enviar(chatId, `¡Listo! Este chat quedó vinculado con la cuenta *${u}*.\n\n` + AYUDA);
   }
-  if (!(await datos.marcarMensaje('tg' + chatId + '_' + msg.message_id))) return;
+  const usuario = await cuentas.usuarioDeChat(chatId);
+  if (!usuario) {
+    return enviar(chatId, 'Para usar el bot, vinculalo con tu cuenta: abrí la Libreta de Plata, andá a *Ajustes* y tocá *Vincular Telegram*.' + (URL_WEB() ? '\n' + URL_WEB() : ''));
+  }
+  if (!(await marcarMensaje('tg' + chatId + '_' + msg.message_id))) return;
 
-  const bot = crearBot({ datos, hoy: hoyAR(), urlWeb: process.env.URL_WEB || '', origen: 'telegram' });
+  const bot = crearBot({ datos: datosDe(usuario), hoy: hoyAR(), urlWeb: URL_WEB(), origen: 'telegram' });
   try {
     let texto = texto0, prefijo = '';
     const audio = msg.voice || msg.audio;

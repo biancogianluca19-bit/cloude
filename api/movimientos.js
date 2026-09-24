@@ -2,11 +2,13 @@
 // POST   /api/movimientos {items}          agrega movimientos
 // PUT    /api/movimientos {item, mesAnterior}
 // DELETE /api/movimientos?id=...&mes=AAAA-MM
-const datos = require('../lib/datos');
-const { responder, autorizado, leerJSON } = require('../lib/http');
+const { datosDe } = require('../lib/datos');
+const { responder, sesionDe, leerJSON } = require('../lib/http');
 
 module.exports = async (req, res) => {
-  if (!autorizado(req, res)) return;
+  const sesion = await sesionDe(req, res);
+  if (!sesion) return;
+  const datos = datosDe(sesion.usuario);
   const url = new URL(req.url, 'http://x');
   try {
     if (req.method === 'GET') {

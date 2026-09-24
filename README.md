@@ -105,6 +105,15 @@ Hace lo mismo que el de WhatsApp y es más fácil de poner en marcha: no pide ve
 
 Los comandos son los mismos: `resumen`, `presupuesto`, `presupuesto súper 200 mil`, `deshacer`, `ayuda`.
 
+## Cuentas
+
+Cada persona crea su cuenta desde la app (*Crear cuenta*: usuario y contraseña) y ve solo sus movimientos, topes y palabras aprendidas. Para compartir la app alcanza con pasar el link o el APK.
+
+- Las sesiones se firman con `AUTH_SECRET` (variable de entorno obligatoria) y duran un año. Cambiar la contraseña cierra las sesiones en otros dispositivos.
+- Telegram: cada uno vincula su chat desde *Ajustes → Vincular Telegram*. El link sirve una vez y vence a los 15 minutos.
+- WhatsApp: los mensajes van a la cuenta indicada en `WHATSAPP_USUARIO`.
+- La libreta de antes de las cuentas (la que usaba `CLAVE_WEB`) se pasa una sola vez a la primera cuenta que lo pida desde un navegador donde esa clave estaba guardada.
+
 ## Notas
 
 - **Números de Argentina.** WhatsApp manda tu número como `549…`, pero Meta solo entrega mensajes a `54…` (sin el 9). El bot hace esa conversión. Si no te llegan las respuestas, poné en `WHATSAPP_RESPONDER_A` el número exacto que figura en la lista *Para* de Meta.

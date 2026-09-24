@@ -2,7 +2,7 @@
 //   GET  verificación del webhook (hub.challenge)
 //   POST mensajes entrantes: texto o audio -> movimientos -> respuesta
 const crypto = require('crypto');
-const datos = require('../lib/datos');
+const { datosDe, marcarMensaje } = require('../lib/datos');
 const { crearBot } = require('../lib/bot');
 const { iguales, hoyAR } = require('../lib/http');
 const { transcribir } = require('../lib/transcribir');
@@ -62,8 +62,9 @@ async function audioDeWhatsApp(mediaId) {
 
 async function atenderMensaje(m, phoneId) {
   if (!permitido(m.from)) { console.warn('Mensaje de un número no permitido:', m.from); return; }
-  if (!(await datos.marcarMensaje(m.id))) return; // WhatsApp reintenta: ya se procesó
-  const bot = crearBot({ datos, hoy: hoyAR(), urlWeb: process.env.URL_WEB || '', origen: 'whatsapp' });
+  if (!(await marcarMensaje(m.id))) return; // WhatsApp reintenta: ya se procesó
+  if (!process.env.WHATSAPP_USUARIO) { console.error('Falta WHATSAPP_USUARIO'); return; }
+  const bot = crearBot({ datos: datosDe(process.env.WHATSAPP_USUARIO), hoy: hoyAR(), urlWeb: process.env.URL_WEB || '', origen: 'whatsapp' });
   try {
     let texto, prefijo = '';
     if (m.type === 'text') texto = m.text && m.text.body;

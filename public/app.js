@@ -33,25 +33,28 @@
     diaSel: null,
     editandoTopes: false,
   };
-  let clave = '';
-  try { clave = localStorage.getItem(LS_CLAVE) || ''; } catch (e) {}
-  // Un link con ?clave=... entra directo y la guarda; después se borra de la barra de direcciones.
+  const LS_TOKEN = 'libreta-plata-token';
+  let token = '', sesion = null;
+  try { token = localStorage.getItem(LS_TOKEN) || ''; } catch (e) {}
+  // Clave de la libreta de antes de las cuentas: sirve una vez para pasar esos datos a una cuenta.
+  let claveVieja = '';
+  try { claveVieja = localStorage.getItem(LS_CLAVE) || ''; } catch (e) {}
   const claveUrl = new URLSearchParams(location.search).get('clave');
   if (claveUrl) {
-    clave = claveUrl;
-    try { localStorage.setItem(LS_CLAVE, clave); } catch (e) {}
-    history.replaceState(null, '', location.pathname);
+    claveVieja = claveUrl;
+    try { localStorage.setItem(LS_CLAVE, claveVieja); } catch (e) {}
   }
+  if (location.search) history.replaceState(null, '', location.pathname + location.hash);
 
   // ---------- Servidor ----------
   async function api(ruta, opciones = {}) {
     const r = await fetch('/api/' + ruta, {
       ...opciones,
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + clave, ...(opciones.headers || {}) },
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token, ...(opciones.headers || {}) },
     });
     const j = await r.json().catch(() => ({}));
-    if (r.status === 401) { pedirClave('La clave no coincide. Escribila de nuevo.'); throw new Error('401'); }
-    if (!r.ok) throw new Error(j.error || 'Error ' + r.status);
+    if (r.status === 401 && ruta.indexOf('cuenta') !== 0) { pedirAcceso(j.error || 'Tu sesión venció. Entrá de nuevo.'); throw new Error('401'); }
+    if (!r.ok) { const e = new Error(j.error || 'Error ' + r.status); e.estado = r.status; throw e; }
     return j;
   }
   function fallo(e, texto) { if (e && e.message !== '401') avisar(texto + (e && e.message ? ' (' + e.message + ')' : '')); }
@@ -75,30 +78,102 @@
     } catch (e) { fallo(e, 'No pude traer los ajustes.'); }
   }
   async function refrescar(silencioso) {
-    if (!clave) return;
+    if (!token) return;
     await Promise.all([cargarMes(S.mes, silencioso), cargarAjustes()]);
     const hoyK = mesDe(hoyIso());
     if (S.mes !== hoyK) cargarMes(hoyK, true);
   }
 
-  function pedirClave(error) {
-    clave = '';
-    try { localStorage.removeItem(LS_CLAVE); } catch (e) {}
-    $('login').hidden = false; $('contenido').hidden = true; $('mesnav').hidden = true;
+  // ---------- Cuenta ----------
+  let modoAcceso = 'entrar';
+  function ponerModoAcceso(m) {
+    modoAcceso = m;
+    const crear = m === 'crear';
+    $('tab-entrar').setAttribute('aria-pressed', !crear);
+    $('tab-crear').setAttribute('aria-pressed', crear);
+    $('login-h').textContent = crear ? 'Creá tu cuenta' : 'Entrá a tu libreta';
+    $('login-hint').textContent = crear ? 'Elegí un usuario y una contraseña. Tu libreta arranca vacía y solo la ves vos.' : 'Cada cuenta tiene sus propios movimientos. Nadie más los ve.';
+    $('acc-nombre-l').hidden = !crear;
+    $('acc-contrasena').autocomplete = crear ? 'new-password' : 'current-password';
+    $('acc-enviar').textContent = crear ? 'Crear cuenta' : 'Entrar';
+    $('login-error').hidden = true;
+  }
+  $('tab-entrar').addEventListener('click', () => ponerModoAcceso('entrar'));
+  $('tab-crear').addEventListener('click', () => ponerModoAcceso('crear'));
+
+  function pedirAcceso(error) {
+    token = ''; sesion = null;
+    try { localStorage.removeItem(LS_TOKEN); } catch (e) {}
+    S.meses = {}; S.aprendidas = {}; S.presupuestos = {}; S.borrador = []; S.sinMonto = [];
+    $('login').hidden = false; $('contenido').hidden = true; $('mesnav').hidden = true; $('traspaso').hidden = true;
     $('login-error').hidden = !error; $('login-error').textContent = error || '';
     S.modo = 'cargando'; renderEstado();
-    $('clave').focus();
+    let conocido = false;
+    try { conocido = !!localStorage.getItem('libreta-plata-conocido'); } catch (e) {}
+    if (!error && !conocido && !claveVieja) ponerModoAcceso('crear');
+  }
+  function abrirSesion(s) {
+    token = s.token; sesion = { usuario: s.usuario, nombre: s.nombre };
+    try { localStorage.setItem(LS_TOKEN, token); localStorage.setItem('libreta-plata-conocido', '1'); } catch (e) {}
+    $('login').hidden = true; $('contenido').hidden = false; $('mesnav').hidden = false;
+    $('acc-contrasena').value = '';
+    renderCuenta();
+    $('traspaso').hidden = !claveVieja;
+    $('traspaso-u').textContent = sesion.usuario;
+    render();
+    refrescar();
   }
   $('login-form').addEventListener('submit', async ev => {
     ev.preventDefault();
-    clave = $('clave').value.trim();
-    if (!clave) return;
+    const b = $('acc-enviar'); b.disabled = true;
     try {
-      await api('ajustes');
-      try { localStorage.setItem(LS_CLAVE, clave); } catch (e) {}
-      $('login').hidden = true; $('contenido').hidden = false; $('mesnav').hidden = false; $('clave').value = '';
-      refrescar();
-    } catch (e) { if (e.message !== '401') { $('login-error').hidden = false; $('login-error').textContent = 'No pude conectar con el servidor: ' + e.message; } }
+      const s = await api('cuenta', { method: 'POST', body: JSON.stringify({ accion: modoAcceso === 'crear' ? 'registrar' : 'entrar', usuario: $('acc-usuario').value, contrasena: $('acc-contrasena').value, nombre: $('acc-nombre').value }) });
+      abrirSesion(s);
+      if (modoAcceso === 'crear') avisar(`Cuenta creada. ¡Bienvenido, ${s.nombre}!`);
+    } catch (e) {
+      $('login-error').hidden = false;
+      $('login-error').textContent = e.estado ? e.message : 'No pude conectar con el servidor. Revisá tu conexión.';
+    }
+    b.disabled = false;
+  });
+  function renderCuenta() {
+    if (!sesion) return;
+    $('cuenta-nombre').textContent = sesion.nombre;
+    $('cuenta-usuario').textContent = '@' + sesion.usuario;
+  }
+  $('btn-traspaso').addEventListener('click', async () => {
+    try {
+      const r = await api('cuenta', { method: 'POST', body: JSON.stringify({ accion: 'traspasar', claveVieja }) });
+      claveVieja = ''; try { localStorage.removeItem(LS_CLAVE); } catch (e) {}
+      $('traspaso').hidden = true;
+      S.meses = {};
+      await refrescar();
+      avisar(r.meses ? `Listo, pasé ${r.meses === 1 ? '1 mes' : r.meses + ' meses'} de movimientos a tu cuenta.` : 'Listo, tu cuenta quedó vinculada con la libreta anterior.');
+    } catch (e) {
+      if (e.estado === 409 || e.estado === 403) { claveVieja = ''; try { localStorage.removeItem(LS_CLAVE); } catch (x) {} $('traspaso').hidden = true; }
+      fallo(e, 'No se pudo pasar la libreta anterior.');
+    }
+  });
+  $('btn-traspaso-no').addEventListener('click', () => {
+    claveVieja = ''; try { localStorage.removeItem(LS_CLAVE); } catch (e) {}
+    $('traspaso').hidden = true;
+  });
+  $('btn-telegram').addEventListener('click', async () => {
+    try {
+      const r = await api('cuenta', { method: 'POST', body: JSON.stringify({ accion: 'telegram' }) });
+      avisar('Se abre Telegram: tocá «Iniciar» para vincular el bot con tu cuenta.');
+      location.href = r.link;
+    } catch (e) { fallo(e, 'No pude generar el link de Telegram.'); }
+  });
+  $('btn-cambiar').addEventListener('click', () => { $('cambiar-form').hidden = !$('cambiar-form').hidden; if (!$('cambiar-form').hidden) $('cc-actual').focus(); });
+  $('cambiar-form').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    try {
+      const s = await api('cuenta', { method: 'POST', body: JSON.stringify({ accion: 'cambiar', actual: $('cc-actual').value, nueva: $('cc-nueva').value }) });
+      token = s.token; try { localStorage.setItem(LS_TOKEN, token); } catch (e) {}
+      $('cc-actual').value = ''; $('cc-nueva').value = ''; $('cambiar-form').hidden = true;
+      avisar('Contraseña cambiada. Se cerró la sesión en tus otros dispositivos.');
+    } catch (e) { fallo(e, 'No se pudo cambiar la contraseña.'); }
   });
 
   // ---------- Voz del navegador ----------
@@ -338,7 +413,7 @@
   }
   function renderEstado() {
     const e = $('estado'); e.dataset.modo = S.modo === 'nube' ? 'db' : S.modo === 'error' ? 'local' : 'cargando';
-    $('estado-txt').textContent = S.modo === 'nube' ? 'Guardado en la nube' : S.modo === 'error' ? 'Sin conexión con el servidor' : clave ? 'Conectando…' : 'Falta la clave';
+    $('estado-txt').textContent = S.modo === 'nube' ? (sesion ? sesion.nombre + ' · guardado en la nube' : 'Guardado en la nube') : S.modo === 'error' ? 'Sin conexión con el servidor' : token ? 'Conectando…' : 'Sin sesión';
   }
   function renderMes() {
     $('mes-txt').textContent = etiquetaMes(S.mes);
@@ -526,7 +601,7 @@
     catch (e) { fallo(e, 'No se pudo.'); }
   });
   $('btn-csv').addEventListener('click', exportarCSV);
-  $('btn-salir').addEventListener('click', () => pedirClave());
+  $('btn-salir').addEventListener('click', () => pedirAcceso());
 
   $('proceso').addEventListener('input', onEditorInput);
   $('proceso').addEventListener('change', onEditorInput);
@@ -615,6 +690,11 @@
   window.addEventListener('appinstalled', () => { $('instalar').hidden = true; });
 
   iniciarVoz();
-  if (clave) { $('contenido').hidden = false; $('mesnav').hidden = false; render(); refrescar(); }
-  else pedirClave();
+  if (token) {
+    $('contenido').hidden = false; $('mesnav').hidden = false; render();
+    api('cuenta').then(s => abrirSesion({ ...s, token })).catch(e => {
+      if (e.estado === 401) pedirAcceso('Tu sesión venció. Entrá de nuevo.');
+      else { S.modo = 'error'; renderEstado(); }
+    });
+  } else pedirAcceso();
 })();
