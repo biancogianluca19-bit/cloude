@@ -2,6 +2,8 @@
 
 Sitio oficial de **Mel In Books**, resúmenes y material de estudio para UBA XXI, CBC y Edición (FILO).
 
+**Publicado en:** https://melinbooks.vercel.app (proyecto `melinbooks` en Vercel, plan gratuito).
+
 Quien entra desde Instagram busca su materia, elige cátedra y opción (un parcial, el combo, el final), arma su pedido y lo envía por WhatsApp con el mensaje ya escrito. Mel solo tiene que responder, cobrar y mandar el PDF.
 
 - **Stack:** Next.js 16 (App Router) + TypeScript + Tailwind CSS 4. Sin base de datos ni panel: todo el contenido está en la carpeta `data/`.
