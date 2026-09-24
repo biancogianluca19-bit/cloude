@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Libreta de Plata</title>
 <meta name="description" content="Tus ingresos y gastos diarios, cargados por Telegram o WhatsApp, o dictados acá, con presupuesto mensual por categoría.">
-<meta name="theme-color" content="#EDF0EE">
+<meta name="theme-color" content="#2F4DB0">
+<link rel="icon" href="/iconos/icono.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/iconos/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Libreta">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <script>try{if(localStorage.getItem('libreta-plata-tema')==='oscuro')document.documentElement.dataset.theme='dark'}catch(e){}</script>
 <meta name="robots" content="noindex">
 <link rel="manifest" href="manifest.webmanifest">
@@ -44,8 +50,19 @@
     <p class="aviso warn" id="login-error" hidden></p>
   </section>
 
+  <section class="card instalar" id="instalar" hidden aria-labelledby="instalar-h">
+    <div>
+      <h2 id="instalar-h">Instalá la app en tu celular</h2>
+      <p id="instalar-txt">Queda con su ícono en la pantalla de inicio y se abre como cualquier app.</p>
+    </div>
+    <div class="fila">
+      <button type="button" class="btn" id="btn-instalar-no">Ahora no</button>
+      <button type="button" class="btn primario" id="btn-instalar">Instalar</button>
+    </div>
+  </section>
+
   <div id="contenido" hidden>
-  <section class="card dictado" aria-labelledby="dictado-h">
+  <section class="card dictado" id="dictado" aria-labelledby="dictado-h">
     <div class="sec-h">
       <h2 id="dictado-h">¿Qué pasó con tu plata hoy?</h2>
       <span class="label" id="hoy-gastado"></span>

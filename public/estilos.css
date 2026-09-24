@@ -269,3 +269,8 @@ details.ajustes summary { cursor: pointer; font-weight: 600; font-family: var(--
 .top-der { display: flex; align-items: center; gap: 8px; }
 .tema { border: 1px solid var(--line); background: var(--surface); width: 34px; height: 34px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
 .tema svg { width: 17px; height: 17px; }
+
+/* Aviso para instalar la app */
+.instalar { display: flex; align-items: center; justify-content: space-between; gap: 12px 16px; flex-wrap: wrap; background: var(--accent-soft); border-color: transparent; }
+.instalar h2 { font-family: var(--f-display); font-size: 17px; margin: 0 0 2px; }
+.instalar p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 46ch; }

@@ -578,6 +578,38 @@
   }
   $('btn-tema').addEventListener('click', () => aplicarTema(document.documentElement.dataset.theme !== 'dark'));
 
+  // ---------- Instalar como app ----------
+  const LS_INSTALAR = 'libreta-plata-instalar-no';
+  const esApp = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  let pedidoInstalar = null;
+  function mostrarInstalar(texto, conBoton) {
+    try { if (localStorage.getItem(LS_INSTALAR)) return; } catch (e) {}
+    $('instalar-txt').textContent = texto;
+    $('btn-instalar').hidden = !conBoton;
+    $('instalar').hidden = false;
+  }
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+  window.addEventListener('beforeinstallprompt', ev => {
+    ev.preventDefault();
+    pedidoInstalar = ev;
+    if (!esApp) mostrarInstalar('Queda con su ícono en la pantalla de inicio y se abre como cualquier app.', true);
+  });
+  if (esIOS && !esApp) mostrarInstalar('En Safari, tocá el botón Compartir (el cuadrado con la flecha) y después «Agregar a inicio».', false);
+  $('btn-instalar').addEventListener('click', async () => {
+    if (!pedidoInstalar) return;
+    pedidoInstalar.prompt();
+    const r = await pedidoInstalar.userChoice.catch(() => null);
+    pedidoInstalar = null;
+    $('instalar').hidden = true;
+    if (r && r.outcome === 'accepted') avisar('Listo, la app quedó instalada.');
+  });
+  $('btn-instalar-no').addEventListener('click', () => {
+    $('instalar').hidden = true;
+    try { localStorage.setItem(LS_INSTALAR, '1'); } catch (e) {}
+  });
+  window.addEventListener('appinstalled', () => { $('instalar').hidden = true; });
+
   iniciarVoz();
   if (clave) { $('contenido').hidden = false; $('mesnav').hidden = false; render(); refrescar(); }
   else pedirClave();
