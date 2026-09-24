@@ -84,3 +84,10 @@ test('mensaje sin monto y ayuda', async () => {
   assert.match(await bot('fui al cine'), /No encontré ningún monto/);
   assert.match(await bot('hola'), /Mandame un audio/);
 });
+
+test('el origen del movimiento se guarda', async () => {
+  const db = baseEnMemoria();
+  const bot = crearBot({ datos: db, hoy: HOY, origen: 'telegram' });
+  await bot('gasté 3000 de nafta');
+  assert.strictEqual(db.meses['2026-09'][0].origen, 'telegram');
+});

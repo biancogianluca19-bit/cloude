@@ -1,5 +1,5 @@
 // Lector local de movimientos dictados en castellano rioplatense.
-// Lo usan la página web (public/index.html) y el bot de WhatsApp (api/whatsapp.js).
+// Lo usan la página web (public/index.html) y los bots (api/whatsapp.js, api/telegram.js).
 (function (raiz) {
 const Lector = (() => {
   const ACC = { 'á': 'a', 'à': 'a', 'ä': 'a', 'â': 'a', 'é': 'e', 'è': 'e', 'ë': 'e', 'ê': 'e', 'í': 'i', 'ì': 'i', 'ï': 'i', 'î': 'i', 'ó': 'o', 'ò': 'o', 'ö': 'o', 'ô': 'o', 'ú': 'u', 'ù': 'u', 'ü': 'u', 'û': 'u', 'ñ': 'n' };

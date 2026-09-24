@@ -99,7 +99,7 @@
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return;
     $('btn-mic').hidden = false;
-    $('hint-voz').textContent = 'Tocá «Dictar» y hablá, o mandale un audio al bot de WhatsApp. Podés decir varios movimientos seguidos.';
+    $('hint-voz').textContent = 'Tocá «Dictar» y hablá, o mandale un audio al bot. Podés decir varios movimientos seguidos.';
     let base = '';
     $('btn-mic').addEventListener('click', () => {
       if (escuchando) { rec && rec.stop(); return; }
@@ -117,7 +117,7 @@
       rec.onerror = ev => {
         if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
           $('btn-mic').hidden = true;
-          $('hint-voz').textContent = 'El navegador no dio permiso al micrófono. Usá el micrófono del teclado o mandá un audio por WhatsApp.';
+          $('hint-voz').textContent = 'El navegador no dio permiso al micrófono. Usá el micrófono del teclado o mandale un audio al bot.';
         }
       };
       rec.onend = () => { escuchando = false; $('btn-mic').dataset.on = '0'; $('mic-txt').textContent = 'Dictar'; };
@@ -287,7 +287,7 @@
   }
   function abrirTopes() {
     const cats = CATEGORIAS.filter(c => c.tipo === 'gasto');
-    $('topes-form').innerHTML = `<p class="ayuda">Cuánto querés gastar por mes en cada categoría. Dejá vacío para no poner tope. Te aviso en la web y por WhatsApp al llegar al 80% y al pasarte.</p>`
+    $('topes-form').innerHTML = `<p class="ayuda">Cuánto querés gastar por mes en cada categoría. Dejá vacío para no poner tope. Te aviso en la web y en el bot al llegar al 80% y al pasarte.</p>`
       + cats.map(c => `<label for="tope-${c.id}">${escapar(c.nombre)}<input id="tope-${c.id}" data-cat="${c.id}" inputmode="decimal" placeholder="Sin tope" value="${S.presupuestos[c.id] ? escapar(fmt.ARS.format(S.presupuestos[c.id]).replace(/[^\d.]/g, '')) : ''}"></label>`).join('')
       + `<div class="acc"><button type="button" class="btn" id="topes-cancelar">Cancelar</button><button type="submit" class="btn primario">Guardar topes</button></div>`;
     S.editandoTopes = true;
@@ -409,7 +409,7 @@
     const items = itemsMes().slice().sort((a, b) => b.fecha.localeCompare(a.fecha) || (b.creado || 0) - (a.creado || 0));
     $('movs-n').textContent = items.length ? `${items.length} en ${etiquetaMes(S.mes).split(' ')[0].toLowerCase()}` : '';
     if (!items.length) {
-      $('movs').innerHTML = `<p class="vacio">${S.modo === 'cargando' ? 'Cargando…' : `No hay movimientos en ${etiquetaMes(S.mes)}. Dictalos arriba o mandale un audio al bot de WhatsApp.`}</p>`;
+      $('movs').innerHTML = `<p class="vacio">${S.modo === 'cargando' ? 'Cargando…' : `No hay movimientos en ${etiquetaMes(S.mes)}. Dictalos arriba o mandale un audio al bot.`}</p>`;
       return;
     }
     const grupos = new Map();
@@ -425,7 +425,7 @@
         if (S.abierto === x.id && edicion) { h += editorHTML(edicion, 'guardado'); continue; }
         h += `<button type="button" class="mov" data-id="${x.id}">
           <span class="chip" data-tipo="${x.tipo}">${escapar(nombreCat(x.cat, x.tipo))}</span>
-          <span class="desc">${escapar(x.desc)}${x.origen === 'whatsapp' ? '<span class="ori">WhatsApp</span>' : ''}</span>
+          <span class="desc">${escapar(x.desc)}${x.origen === 'whatsapp' ? '<span class="ori">WhatsApp</span>' : x.origen === 'telegram' ? '<span class="ori">Telegram</span>' : ''}</span>
           <span class="m num" data-tipo="${x.tipo}">${x.tipo === 'ingreso' ? '+' : '−'}${plata(x.monto, x.moneda)}</span>
         </button>`;
       }
@@ -462,8 +462,8 @@
   function renderAjustes() {
     const n = Object.keys(S.aprendidas).length;
     $('aprendidas-txt').textContent = n
-      ? `Aprendí ${n} ${n === 1 ? 'palabra' : 'palabras'} de tus correcciones de categoría (por ejemplo: ${Object.entries(S.aprendidas).slice(-3).map(([w, c]) => `«${w}» → ${nombreCat(c)}`).join(', ')}). Las uso acá y en WhatsApp.`
-      : 'Cuando cambiás la categoría de un movimiento, aprendo esas palabras y la próxima vez lo ordeno solo, acá y en WhatsApp.';
+      ? `Aprendí ${n} ${n === 1 ? 'palabra' : 'palabras'} de tus correcciones de categoría (por ejemplo: ${Object.entries(S.aprendidas).slice(-3).map(([w, c]) => `«${w}» → ${nombreCat(c)}`).join(', ')}). Las uso acá y en el bot.`
+      : 'Cuando cambiás la categoría de un movimiento, aprendo esas palabras y la próxima vez lo ordeno solo, acá y en el bot.';
     $('btn-olvidar').disabled = !n;
   }
 
@@ -548,7 +548,7 @@
   let tRes = null;
   window.addEventListener('resize', () => { clearTimeout(tRes); tRes = setTimeout(renderGrafico, 120); });
 
-  // Lo que llega por WhatsApp aparece al volver a la página y cada minuto mientras está abierta.
+  // Lo que llega por el bot aparece al volver a la página y cada minuto mientras está abierta.
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !edicion && !S.editandoTopes) refrescar(true); });
   setInterval(() => { if (document.visibilityState === 'visible' && !edicion && !S.editandoTopes && !S.borrador.length) refrescar(true); }, 60000);
 

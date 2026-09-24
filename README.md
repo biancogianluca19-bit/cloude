@@ -93,6 +93,18 @@ Guardá y, en *Campos del webhook*, suscribite a **messages**.
 
 Listo: mandale "hola" al número de prueba desde tu WhatsApp.
 
+## Bot de Telegram
+
+Hace lo mismo que el de WhatsApp y es más fácil de poner en marcha: no pide verificar el teléfono ni tener cuenta de desarrollador.
+
+1. En Telegram, hablale a **@BotFather**, mandá `/newbot` y seguí los pasos. Te da un token.
+2. En Vercel, cargá `TELEGRAM_TOKEN` (ese token) y `TELEGRAM_SECRET` (cualquier texto largo). Hacé *Redeploy*.
+3. Conectá el webhook (una sola vez):
+   `https://api.telegram.org/bot<TELEGRAM_TOKEN>/setWebhook?url=https://TU-PROYECTO.vercel.app/api/telegram&secret_token=<TELEGRAM_SECRET>`
+4. Vinculá tu chat abriendo `https://t.me/<usuario_del_bot>?start=<CLAVE_WEB>`. El bot solo atiende chats vinculados.
+
+Los comandos son los mismos: `resumen`, `presupuesto`, `presupuesto súper 200 mil`, `deshacer`, `ayuda`.
+
 ## Notas
 
 - **Números de Argentina.** WhatsApp manda tu número como `549…`, pero Meta solo entrega mensajes a `54…` (sin el 9). El bot hace esa conversión. Si no te llegan las respuestas, poné en `WHATSAPP_RESPONDER_A` el número exacto que figura en la lista *Para* de Meta.

@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const datos = require('../lib/datos');
 const { crearBot } = require('../lib/bot');
 const { iguales, hoyAR } = require('../lib/http');
+const { transcribir } = require('../lib/transcribir');
 
 const GRAPH = 'https://graph.facebook.com/v21.0';
 const TOKEN = () => process.env.WHATSAPP_TOKEN;
@@ -51,33 +52,23 @@ async function enviar(phoneId, a, texto) {
   if (!r.ok) console.error('No se pudo responder por WhatsApp:', r.status, await r.text());
 }
 
-async function transcribir(mediaId) {
-  if (!process.env.GROQ_API_KEY) throw new Error('Falta GROQ_API_KEY');
+async function audioDeWhatsApp(mediaId) {
   const meta = await fetch(`${GRAPH}/${mediaId}`, { headers: { Authorization: `Bearer ${TOKEN()}` } }).then(r => r.json());
   if (!meta.url) throw new Error('WhatsApp no dio el audio: ' + JSON.stringify(meta.error || meta));
   const audio = await fetch(meta.url, { headers: { Authorization: `Bearer ${TOKEN()}` } });
   if (!audio.ok) throw new Error('No se pudo bajar el audio: ' + audio.status);
-  const fd = new FormData();
-  fd.append('file', new Blob([await audio.arrayBuffer()], { type: (meta.mime_type || 'audio/ogg').split(';')[0] }), 'audio.ogg');
-  fd.append('model', process.env.GROQ_MODELO || 'whisper-large-v3-turbo');
-  fd.append('language', 'es');
-  fd.append('temperature', '0');
-  fd.append('prompt', 'Gastos e ingresos en pesos argentinos. Gasté 4.500 en el súper, 12 mil de nafta, cargué la SUBE, pagué las expensas y el monotributo. Me pagaron 150 lucas. Cobré el sueldo.');
-  const r = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', { method: 'POST', headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, body: fd });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error('Groq respondió ' + r.status + ': ' + JSON.stringify(j.error || j));
-  return String(j.text || '').trim();
+  return transcribir(await audio.arrayBuffer(), { tipo: meta.mime_type || 'audio/ogg' });
 }
 
 async function atenderMensaje(m, phoneId) {
   if (!permitido(m.from)) { console.warn('Mensaje de un número no permitido:', m.from); return; }
   if (!(await datos.marcarMensaje(m.id))) return; // WhatsApp reintenta: ya se procesó
-  const bot = crearBot({ datos, hoy: hoyAR(), urlWeb: process.env.URL_WEB || '' });
+  const bot = crearBot({ datos, hoy: hoyAR(), urlWeb: process.env.URL_WEB || '', origen: 'whatsapp' });
   try {
     let texto, prefijo = '';
     if (m.type === 'text') texto = m.text && m.text.body;
     else if (m.type === 'audio') {
-      texto = await transcribir(m.audio.id);
+      texto = await audioDeWhatsApp(m.audio.id);
       if (!texto) return enviar(phoneId, m.from, 'No entendí el audio. ¿Me lo mandás de nuevo o por escrito?');
       prefijo = `🎙️ «${texto}»\n\n`;
     } else if (m.type === 'button' || m.type === 'interactive') texto = 'ayuda';

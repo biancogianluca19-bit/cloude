@@ -1,5 +1,5 @@
 // Cálculo del estado del presupuesto mensual por categoría.
-// Lo usan la página web y el bot de WhatsApp. Solo cuenta gastos en pesos.
+// Lo usan la página web y los bots. Solo cuenta gastos en pesos.
 (function (raiz) {
   const CERCA = 0.8;
 
