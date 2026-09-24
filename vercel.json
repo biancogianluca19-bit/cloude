@@ -31,6 +31,28 @@
           "value": "application/manifest+json"
         }
       ]
+    },
+    {
+      "source": "/descargar/libreta-de-plata.apk",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/vnd.android.package-archive"
+        },
+        {
+          "key": "Content-Disposition",
+          "value": "attachment; filename=\"libreta-de-plata.apk\""
+        }
+      ]
+    },
+    {
+      "source": "/.well-known/assetlinks.json",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ]
     }
   ]
 }

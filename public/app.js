@@ -595,9 +595,13 @@
     pedidoInstalar = ev;
     if (!esApp) mostrarInstalar('Queda con su ícono en la pantalla de inicio y se abre como cualquier app.', true);
   });
+  const esAndroid = /android/i.test(navigator.userAgent);
+  if (esAndroid && !esApp && !/wv\)/.test(navigator.userAgent)) {
+    setTimeout(() => { if (!pedidoInstalar) mostrarInstalar('Bajá la app para Android e instalala como cualquier aplicación.', true); }, 1500);
+  }
   if (esIOS && !esApp) mostrarInstalar('En Safari, tocá el botón Compartir (el cuadrado con la flecha) y después «Agregar a inicio».', false);
   $('btn-instalar').addEventListener('click', async () => {
-    if (!pedidoInstalar) return;
+    if (!pedidoInstalar) { location.href = '/descargar/libreta-de-plata.apk'; return; }
     pedidoInstalar.prompt();
     const r = await pedidoInstalar.userChoice.catch(() => null);
     pedidoInstalar = null;

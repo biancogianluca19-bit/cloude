@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.libretadeplata",
+        "sha256_cert_fingerprints": ["45:38:BC:52:13:B4:D6:07:5F:4E:B1:8E:2F:29:1C:A1:22:C7:3A:56:B4:04:6F:95:B5:D4:06:2A:8B:AF:4D:1D"]
+      }
+    }]

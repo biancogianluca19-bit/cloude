@@ -274,3 +274,4 @@ details.ajustes summary { cursor: pointer; font-weight: 600; font-family: var(--
 .instalar { display: flex; align-items: center; justify-content: space-between; gap: 12px 16px; flex-wrap: wrap; background: var(--accent-soft); border-color: transparent; }
 .instalar h2 { font-family: var(--f-display); font-size: 17px; margin: 0 0 2px; }
 .instalar p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 46ch; }
+a.btn { text-decoration: none; color: var(--ink); }

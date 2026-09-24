@@ -1,7 +1,7 @@
 // Service worker de Libreta de Plata: permite instalarla como app y abrirla sin conexión.
 // Los archivos se piden primero a la red (así siempre ves la última versión) y, si no hay
 // conexión, se usan los guardados. La API (/api/) nunca se guarda.
-const CACHE = 'libreta-v1';
+const CACHE = 'libreta-v2';
 const ARCHIVOS = ['/', '/estilos.css', '/app.js', '/lector.js', '/presupuesto.js', '/manifest.webmanifest', '/iconos/icono-192.png', '/iconos/icono-512.png'];
 
 self.addEventListener('install', ev => {
@@ -14,7 +14,7 @@ self.addEventListener('activate', ev => {
 
 self.addEventListener('fetch', ev => {
   const url = new URL(ev.request.url);
-  if (ev.request.method !== 'GET' || url.origin !== location.origin || url.pathname.startsWith('/api/')) return;
+  if (ev.request.method !== 'GET' || url.origin !== location.origin || url.pathname.startsWith('/api/') || url.pathname.startsWith('/descargar/')) return;
   ev.respondWith(
     fetch(ev.request)
       .then(r => {
