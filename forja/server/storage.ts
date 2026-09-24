@@ -189,6 +189,8 @@ export async function takeIncoming(pathname: string): Promise<Buffer> {
 
 export const INCOMING_PREFIX = PREFIX + "entrantes/";
 
+const INSTANCE = Math.random().toString(36).slice(2, 8);
+
 export function storageInfo() {
-  return { mode: BLOB_MODE ? "blob" : "local", dirty, etag: etag ? etag.slice(0, 8) : null };
+  return { mode: BLOB_MODE ? "blob" : "local", instance: INSTANCE, dirty, active, etag: etag ? etag.slice(-8) : null, lastCheck };
 }

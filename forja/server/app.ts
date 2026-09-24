@@ -130,6 +130,7 @@ export function createApp() {
 
   // ------------------------------------------------------------ Estado y ajustes
   app.get("/api/status", h(() => ({ ai: aiAvailable(), model: model(), demo: !aiAvailable(), keySource: process.env.ANTHROPIC_API_KEY ? "entorno" : getSetting("anthropic_api_key") ? "ajustes" : null, storage: storageInfo().mode, auth: authRequired() })));
+  app.get("/api/status/storage", h(() => storageInfo()));
   app.put(
     "/api/settings",
     h((req) => {

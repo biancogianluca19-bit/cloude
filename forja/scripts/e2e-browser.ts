@@ -57,127 +57,134 @@ if (INSECURE) await desk.route(/vercel-storage\.com|vercel\.com\/api\/blob/, asy
 const page = await desk.newPage();
 watch(page, "escritorio");
 
-step("Inicio");
-await page.goto(BASE + "/");
-await loginIfNeeded(page);
-await page.getByRole("heading", { name: "Tus materias" }).waitFor();
-await shot(page, "01-materias");
+let newSubjectUrl = "";
+try {
+  step("Inicio");
+  await page.goto(BASE + "/");
+  await loginIfNeeded(page);
+  await page.getByRole("heading", { name: "Tus materias" }).waitFor();
+  await shot(page, "01-materias");
 
-step("Crear materia");
-await page.getByRole("button", { name: "Nueva materia" }).click();
-await page.getByLabel("Nombre").fill("Costos (prueba e2e)");
-await page.getByLabel("Profesor/a").fill("Prof. Prueba");
-await page.getByRole("button", { name: "Crear y cargar material" }).click();
-await page.waitForURL(/\/material\?nueva=1/);
+  step("Crear materia");
+  await page.getByRole("button", { name: "Nueva materia" }).click();
+  await page.getByLabel("Nombre").fill("Costos (prueba e2e)");
+  await page.getByLabel("Profesor/a").fill("Prof. Prueba");
+  await page.getByRole("button", { name: "Crear y cargar material" }).click();
+  await page.waitForURL(/\/material\?nueva=1/);
 
-step("Cargar archivos reales");
-// Se pasan por contenido: Playwright no dispara la carga con rutas que tienen tildes.
-const files = fs.readdirSync(DEMO).map((f) => ({ name: f, mimeType: "application/octet-stream", buffer: fs.readFileSync(path.join(DEMO, f)) }));
-await page.locator('input[type="file"]').first().setInputFiles(files);
-await page.getByRole("heading", { name: "Resultado de la carga" }).waitFor({ timeout: 90_000 });
-await page.getByText(/Security scan: \d+ alerta/).waitFor();
-const loaded = await page.locator(".list-item").filter({ hasText: /fragmento\(s\)/ }).count();
-if (loaded < files.length) problems.push(`solo se procesaron ${loaded} de ${files.length} archivos`);
-await shot(page, "02-material-cargado");
-const newSubjectUrl = page.url().replace(/\/material.*$/, "");
+  step("Cargar archivos reales");
+  // Se pasan por contenido: Playwright no dispara la carga con rutas que tienen tildes.
+  const files = fs.readdirSync(DEMO).map((f) => ({ name: f, mimeType: "application/octet-stream", buffer: fs.readFileSync(path.join(DEMO, f)) }));
+  await page.locator('input[type="file"]').first().setInputFiles(files);
+  await page.getByRole("heading", { name: "Resultado de la carga" }).waitFor({ timeout: 90_000 });
+  await page.getByText(/Security scan: \d+ alerta/).waitFor();
+  const loaded = await page.locator(".list-item").filter({ hasText: /fragmento\(s\)/ }).count();
+  if (loaded < files.length) problems.push(`solo se procesaron ${loaded} de ${files.length} archivos`);
+  await shot(page, "02-material-cargado");
+  newSubjectUrl = page.url().replace(/\/material.*$/, "");
 
-step("Decidir sobre una alerta");
-await page.getByRole("button", { name: "Mantener excluido" }).first().click();
-await page.waitForTimeout(500);
+  step("Decidir sobre una alerta");
+  await page.getByRole("button", { name: "Mantener excluido" }).first().click();
+  await page.waitForTimeout(500);
 
-step("Configurar examen");
-await page.goto(newSubjectUrl + "/examen");
-const d = new Date(Date.now() + 4 * 86400000);
-await page.locator('input[type="date"]').fill(d.toISOString().slice(0, 10));
-await page.getByRole("button", { name: "Guardar y armar plan" }).click();
-await page.getByRole("heading", { name: "Día por día" }).waitFor();
-await shot(page, "03-plan");
+  step("Configurar examen");
+  await page.goto(newSubjectUrl + "/examen");
+  const d = new Date(Date.now() + 4 * 86400000);
+  await page.locator('input[type="date"]').fill(d.toISOString().slice(0, 10));
+  await page.getByRole("button", { name: "Guardar y armar plan" }).click();
+  await page.getByRole("heading", { name: "Día por día" }).waitFor();
+  await shot(page, "03-plan");
 
-step("Hoy");
-await page.goto(newSubjectUrl);
-await page.getByText("Qué estudiar ahora").waitFor();
-await shot(page, "04-hoy");
+  step("Hoy");
+  await page.goto(newSubjectUrl);
+  await page.getByText("Qué estudiar ahora").waitFor();
+  await shot(page, "04-hoy");
 
-step("Perfil del profesor");
-await page.goto(newSubjectUrl + "/profesor");
-await page.getByRole("heading", { name: "Método observado del profesor" }).waitFor();
-await page.getByText("Terminología que usa").click().catch(() => {});
-await shot(page, "05-perfil");
+  step("Perfil del profesor");
+  await page.goto(newSubjectUrl + "/profesor");
+  await page.getByRole("heading", { name: "Método observado del profesor" }).waitFor();
+  await page.getByText("Terminología que usa").click().catch(() => {});
+  await shot(page, "05-perfil");
 
-step("Tutor");
-await page.goto(newSubjectUrl + "/tutor");
-await page.getByRole("button", { name: "¿Cómo resuelve este profesor el ejercicio 1.7?" }).click();
-await page.getByText("Modo demo").first().waitFor({ timeout: 20_000 });
-await page.getByLabel("Pregunta al tutor").fill("Dame otro ejercicio parecido de punto de equilibrio");
-await page.keyboard.press("Enter");
-await page.getByRole("link", { name: "Resolver el ejercicio" }).waitFor();
-await shot(page, "06-tutor");
+  step("Tutor");
+  await page.goto(newSubjectUrl + "/tutor");
+  await page.getByRole("button", { name: "¿Cómo resuelve este profesor el ejercicio 1.7?" }).click();
+  await page.getByText("Modo demo").first().waitFor({ timeout: 20_000 });
+  await page.getByLabel("Pregunta al tutor").fill("Dame otro ejercicio parecido de punto de equilibrio");
+  await page.keyboard.press("Enter");
+  await page.getByRole("link", { name: "Resolver el ejercicio" }).waitFor();
+  await shot(page, "06-tutor");
 
-step("Resolver el ejercicio con pistas y entregar");
-await page.getByRole("link", { name: "Resolver el ejercicio" }).click();
-await page.getByRole("button", { name: "Pista mínima" }).click();
-await page.locator(".hint-box").first().waitFor();
-const inputs = page.locator(".step-input input");
-const n = await inputs.count();
-for (let i = 0; i < n; i++) await inputs.nth(i).fill(String(1000 * (i + 1)));
-await shot(page, "07-ejercicio");
-await page.getByRole("button", { name: "Entregar" }).click();
-await page.getByRole("heading", { name: "Paso a paso" }).waitFor();
-await shot(page, "08-correccion");
+  step("Resolver el ejercicio con pistas y entregar");
+  await page.getByRole("link", { name: "Resolver el ejercicio" }).click();
+  await page.getByRole("button", { name: "Pista mínima" }).click();
+  await page.locator(".hint-box").first().waitFor();
+  const inputs = page.locator(".step-input input");
+  const n = await inputs.count();
+  for (let i = 0; i < n; i++) await inputs.nth(i).fill(String(1000 * (i + 1)));
+  await shot(page, "07-ejercicio");
+  await page.getByRole("button", { name: "Entregar" }).click();
+  await page.getByRole("heading", { name: "Paso a paso" }).waitFor();
+  await shot(page, "08-correccion");
 
-step("Mapa");
-await page.goto(newSubjectUrl + "/mapa");
-await page.locator("svg[aria-label='Mapa de temas']").waitFor();
-await shot(page, "09-mapa");
+  step("Mapa");
+  await page.goto(newSubjectUrl + "/mapa");
+  await page.locator("svg[aria-label='Mapa de temas']").waitFor();
+  await shot(page, "09-mapa");
 
-step("Simulacro: crear, responder una pregunta y entregar");
-await page.goto(newSubjectUrl + "/simulacros");
-await page.getByRole("button", { name: "Empezar ahora" }).click();
-await page.waitForURL(/simulacro\/\d+/);
-await page.locator(".timer").waitFor();
-const radios = page.getByRole("radio");
-if (await radios.count()) await radios.first().click();
-await shot(page, "10-simulacro");
-await page.getByRole("button", { name: "Entregar", exact: true }).click();
-await page.getByRole("dialog").getByRole("button", { name: "Entregar" }).click();
-await page.getByRole("heading", { name: /corrección/ }).waitFor({ timeout: 30_000 });
-await shot(page, "11-simulacro-corregido");
+  step("Simulacro: crear, responder una pregunta y entregar");
+  await page.goto(newSubjectUrl + "/simulacros");
+  await page.getByRole("button", { name: "Empezar ahora" }).click();
+  await page.waitForURL(/simulacro\/\d+/);
+  await page.locator(".timer").waitFor();
+  const radios = page.getByRole("radio");
+  if (await radios.count()) await radios.first().click();
+  await shot(page, "10-simulacro");
+  await page.getByRole("button", { name: "Entregar", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Entregar" }).click();
+  await page.getByRole("heading", { name: /corrección/ }).waitFor({ timeout: 30_000 });
+  await shot(page, "11-simulacro-corregido");
 
-step("¿Estoy para aprobar?");
-await page.goto(newSubjectUrl + "/aprobar");
-await page.getByText(/Readiness \d+\/100/).waitFor();
-await shot(page, "12-aprobar");
+  step("¿Estoy para aprobar?");
+  await page.goto(newSubjectUrl + "/aprobar");
+  await page.getByText(/Readiness \d+\/100/).waitFor();
+  await shot(page, "12-aprobar");
 
-step("Errores y tarjetas");
-await page.goto(newSubjectUrl + "/errores");
-await page.getByRole("heading", { name: "Memoria de errores" }).waitFor();
-await page.goto(newSubjectUrl + "/tarjetas");
-await page.getByRole("heading", { name: "Tarjetas" }).waitFor();
-const show = page.getByRole("button", { name: "Mostrar respuesta" });
-if (await show.count()) {
-  await show.click();
-  await page.getByRole("button", { name: /Bien/ }).click();
+  step("Errores y tarjetas");
+  await page.goto(newSubjectUrl + "/errores");
+  await page.getByRole("heading", { name: "Memoria de errores" }).waitFor();
+  await page.goto(newSubjectUrl + "/tarjetas");
+  await page.getByRole("heading", { name: "Tarjetas" }).waitFor();
+  const show = page.getByRole("button", { name: "Mostrar respuesta" });
+  if (await show.count()) {
+    await show.click();
+    await page.getByRole("button", { name: /Bien/ }).click();
+  }
+  await shot(page, "13-tarjetas");
+
+  step("Sesión de estudio");
+  await page.goto(newSubjectUrl + "/estudiar");
+  await page.getByRole("button", { name: "30 min" }).click();
+  await page.getByRole("button", { name: /Empezar 30 minutos/ }).click();
+  await page.getByText(/Tarea 1/).waitFor();
+  await shot(page, "14-sesion");
+
+  step("Paleta de comandos y modo claro");
+  await page.keyboard.press("Control+k");
+  await page.getByPlaceholder(/Buscá una pantalla/).fill("carga fabril");
+  await page.waitForTimeout(500);
+  await shot(page, "15-paleta");
+  await page.keyboard.press("Escape");
+
+  step("Persistencia: recargar");
+  await page.goto(newSubjectUrl + "/errores");
+  await page.reload();
+  await page.getByRole("heading", { name: "Memoria de errores" }).waitFor();
+} catch (e) {
+  await page.screenshot({ path: path.join(OUT, "FALLA-escritorio.png"), fullPage: true }).catch(() => {});
+  console.error("Falla en escritorio; captura en FALLA-escritorio.png");
+  throw e;
 }
-await shot(page, "13-tarjetas");
-
-step("Sesión de estudio");
-await page.goto(newSubjectUrl + "/estudiar");
-await page.getByRole("button", { name: "30 min" }).click();
-await page.getByRole("button", { name: /Empezar 30 minutos/ }).click();
-await page.getByText(/Tarea 1/).waitFor();
-await shot(page, "14-sesion");
-
-step("Paleta de comandos y modo claro");
-await page.keyboard.press("Control+k");
-await page.getByPlaceholder(/Buscá una pantalla/).fill("carga fabril");
-await page.waitForTimeout(500);
-await shot(page, "15-paleta");
-await page.keyboard.press("Escape");
-
-step("Persistencia: recargar");
-await page.goto(newSubjectUrl + "/errores");
-await page.reload();
-await page.getByRole("heading", { name: "Memoria de errores" }).waitFor();
 await desk.close();
 
 // ------------------------------------------------------------------ Celular

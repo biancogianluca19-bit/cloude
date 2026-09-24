@@ -31,6 +31,17 @@ Variables útiles:
 | `FORJA_NO_DEMO=1` | No crear la materia demo. |
 | `FORJA_DISABLE_TESSERACT=1` | Desactiva el OCR local. |
 
+## Versión publicada (Vercel)
+
+FORJA también corre en Vercel, con los datos en un almacenamiento privado de Vercel Blob y acceso con contraseña.
+
+- **Proyecto:** `forja` en Vercel, carpeta raíz `forja/`, comando de build `npm run build:vercel` (arma `.vercel/output` con la Build Output API: la interfaz como archivos estáticos y la API como una sola función Node en São Paulo).
+- **Variables del proyecto:** `FORJA_PASSWORD` (contraseña de acceso) y `BLOB_READ_WRITE_TOKEN` (la crea Vercel al conectar el store `forja-datos`). Opcionales: `ANTHROPIC_API_KEY`, `FORJA_MODEL`. La API key también se puede cargar desde *Ajustes* dentro de la app: queda guardada en la base, dentro del store privado.
+- **Cambiar la contraseña:** editá `FORJA_PASSWORD` en Vercel (*Settings → Environment Variables*) y redesplegá. Las sesiones abiertas se cierran solas porque la firma depende de la contraseña.
+- **Cómo se guardan los datos:** la base SQLite vive en la memoria temporal de la función y se sincroniza con el store: antes de cada escritura se trae la última versión, después de cada cambio se sube (agrupando cambios que llegan con menos de 1,2 s de diferencia) con escritura condicional. Si dos instancias escriben a la vez, la versión remota se respalda en `forja/db/conflictos/` antes de guardar. Los archivos subidos y las fotos se guardan en `forja/data/`.
+- **Archivos grandes:** van directo del navegador al store (las funciones de Vercel aceptan hasta 4,5 MB por pedido); después la función los procesa.
+- **Límites del plan gratuito de Vercel Blob:** 1 GB de almacenamiento y un cupo mensual de operaciones de escritura. Cada acción que cambia datos (entregar un ejercicio, pedir una pista, calificar una tarjeta) es una escritura. Con uso normal alcanza; en semanas de estudio muy intenso puede agotarse y el almacenamiento se pausa hasta el mes siguiente. El consumo se ve en Vercel → *Storage → forja-datos*.
+
 ## Prueba rápida del flujo completo
 
 1. En la materia demo, **Hoy** muestra la cuenta regresiva, el readiness y qué estudiar ahora.
