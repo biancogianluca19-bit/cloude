@@ -10,7 +10,13 @@ export class ApiError extends Error {
 
 // Versión de la base que ya vio este navegador (versión publicada). Se reenvía en cada pedido
 // para que ninguna instancia del servidor responda con datos más viejos.
-let version: string | null = null;
+let version: string | null = (() => {
+  try {
+    return localStorage.getItem("forja-version");
+  } catch {
+    return null;
+  }
+})();
 const _fetch = window.fetch.bind(window);
 window.fetch = async (input: RequestInfo | URL, init: RequestInit = {}) => {
   const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
@@ -23,7 +29,14 @@ window.fetch = async (input: RequestInfo | URL, init: RequestInit = {}) => {
   const res = await _fetch(input, init);
   if (same) {
     const v = res.headers.get("x-forja-version");
-    if (v) version = v;
+    if (v && v !== version) {
+      version = v;
+      try {
+        localStorage.setItem("forja-version", v);
+      } catch {
+        /* sin almacenamiento local */
+      }
+    }
   }
   return res;
 };
