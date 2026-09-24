@@ -1,0 +1,10 @@
+{
+  "name": "FORJA",
+  "short_name": "FORJA",
+  "description": "Entrenador personal para preparar parciales con el material de tu materia.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0e10",
+  "theme_color": "#e0592a",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

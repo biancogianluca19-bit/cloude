@@ -1,0 +1,11 @@
+# Mis apuntes de Sistemas de Costos
+
+Unidad 1: Elementos del costo
+El costo primo es la suma de materia prima y mano de obra directa.
+El costo de conversión es la suma de mano de obra directa y carga fabril.
+
+Unidad 2: Materia prima
+El precio promedio ponderado es el costo total disponible dividido por las unidades disponibles.
+PEPS significa primero entrado, primero salido: primero se consume el inventario más viejo.
+
+Ojo en el parcial: la profe pide justificar todo y expresar resultados en pesos.

@@ -1,5 +1,7 @@
 # Libreta de Plata
 
+> En este repo también está **[FORJA](forja/README.md)**, el entrenador para preparar parciales (carpeta `forja/`).
+
 Tus ingresos y gastos del día, cargados por WhatsApp (audio o texto) o desde la web, con presupuesto mensual por categoría.
 
 Le mandás al bot un audio que diga:
