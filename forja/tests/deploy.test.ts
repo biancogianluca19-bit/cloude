@@ -24,7 +24,8 @@ vi.mock("@vercel/blob", () => ({
       throw e;
     }
     if (opts.ifNoneMatch && opts.ifNoneMatch === cur.etag) return { statusCode: 304, stream: null, blob: { etag: cur.etag } };
-    return { statusCode: 200, stream: new Blob([new Uint8Array(cur.buf)]).stream(), blob: { etag: cur.etag } };
+    // Como el store real: la descarga comprimida trae el etag débil.
+    return { statusCode: 200, stream: new Blob([new Uint8Array(cur.buf)]).stream(), blob: { etag: `W/${cur.etag}` } };
   }),
   del: vi.fn(async (key: string) => void store.delete(key)),
   head: vi.fn(async (key: string) => {
@@ -80,6 +81,19 @@ describe("sincronización con Blob", () => {
     fs.rmSync(db.dbPath(), { force: true });
     await storage.syncBefore(true);
     expect(db.get<any>("SELECT name FROM subjects WHERE name = 'Guardada'")).toBeTruthy();
+  });
+
+  it("guardados seguidos de una sola instancia no generan conflictos", async () => {
+    await storage.syncBefore(true);
+    const before = [...store.keys()].filter((k) => k.includes("db/conflictos/")).length;
+    for (const name of ["Uno", "Dos", "Tres"]) {
+      await storage.syncBefore(true);
+      db.run("INSERT INTO subjects(name) VALUES (?)", [name]);
+      storage.markDirty();
+      await storage.flush();
+    }
+    expect([...store.keys()].filter((k) => k.includes("db/conflictos/")).length).toBe(before);
+    expect(storage.currentVersion()).not.toMatch(/^W\//);
   });
 
   it("si otra instancia escribió en el medio, respalda la remota y no pierde el cambio local", async () => {

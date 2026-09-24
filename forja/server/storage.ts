@@ -93,7 +93,7 @@ async function pull(force = false) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   for (const suffix of ["-journal", "-wal", "-shm"]) fs.rmSync(file + suffix, { force: true });
   fs.writeFileSync(file, buf);
-  etag = r.blob.etag;
+  etag = normTag(r.blob.etag);
 }
 
 /**
@@ -173,7 +173,7 @@ export function flush(changeset?: Uint8Array | null, label = "diferido"): Promis
         const remoteTag = await remoteEtag();
         if (remoteTag !== null && remoteTag !== etag) throw new BlobPreconditionFailedError();
         const r = await put(DB_KEY, buf, opts);
-        etag = r.etag;
+        etag = normTag(r.etag);
         return;
       } catch (e) {
         if (!(e instanceof BlobPreconditionFailedError)) {
@@ -196,13 +196,21 @@ export function flush(changeset?: Uint8Array | null, label = "diferido"): Promis
         const remote = await get(DB_KEY, { access: "private", useCache: false });
         if (remote?.statusCode === 200) await put(`${PREFIX}db/conflictos/${Date.now()}-${tag(label)}-sin-changeset.db`, await readStream(remote.stream), opts);
         const r = await put(DB_KEY, buf, opts);
-        etag = r.etag;
+        etag = normTag(r.etag);
         return;
       }
     }
     dirty = true;
     throw new Error("No se pudo guardar después de varios intentos");
   });
+}
+
+/**
+ * El store responde la descarga comprimida con un etag débil (W/"…") y el head o la subida con el
+ * fuerte ("…"). Es la misma versión: se compara sin el prefijo.
+ */
+export function normTag(t: string | null | undefined): string | null {
+  return t ? t.replace(/^W\//, "") : null;
 }
 
 function tag(s: string) {
@@ -213,7 +221,7 @@ function tag(s: string) {
 async function remoteEtag(): Promise<string | null> {
   const { head } = await blob();
   try {
-    return ((await head(DB_KEY)) as any).etag ?? null;
+    return normTag(((await head(DB_KEY)) as any).etag);
   } catch (e: any) {
     if (e?.name === "BlobNotFoundError") return null;
     throw e;
@@ -320,48 +328,4 @@ export async function cleanupOrphans(referenced: Set<string>): Promise<{ deleted
   } while (cursor);
   for (let i = 0; i < toDelete.length; i += 100) await del(toDelete.slice(i, i + 100));
   return { deleted: toDelete.length, kept, byKind, recentConflicts: conflicts.sort().slice(-25) };
-}
-
-/** Diagnóstico: ¿get/head devuelven la versión nueva inmediatamente después de sobrescribir? */
-export async function etagProbe() {
-  if (!BLOB_MODE) return null;
-  const { put, head, get, del } = await blob();
-  const key = PREFIX + "diagnostico/etag.txt";
-  const out: any[] = [];
-  const p1 = await put(key, "uno" + Date.now(), { access: "private", allowOverwrite: true, addRandomSuffix: false });
-  const g1 = await get(key, { access: "private", useCache: false });
-  const p2 = await put(key, "dos" + Date.now(), { access: "private", allowOverwrite: true, addRandomSuffix: false, ifMatch: g1?.blob.etag });
-  for (let i = 0; i < 4; i++) {
-    const gNo = await get(key, { access: "private", useCache: false });
-    const gSi = await get(key, { access: "private" });
-    const h = await head(key);
-    out.push({ ms: i * 700, getSinCache: gNo?.blob.etag === p2.etag, getConCache: gSi?.blob.etag === p2.etag, head: (h as any).etag === p2.etag });
-    await new Promise((r) => setTimeout(r, 700));
-  }
-  // Mismo experimento con un archivo grande.
-  const big = Buffer.alloc(4 * 1024 * 1024, 7);
-  const b1 = await put(key, big, { access: "private", allowOverwrite: true, addRandomSuffix: false });
-  let grande = "";
-  try {
-    await put(key, big, { access: "private", allowOverwrite: true, addRandomSuffix: false, ifMatch: b1.etag });
-    grande = "ifMatch ok con 4 MB";
-  } catch (e: any) {
-    grande = "ifMatch falla con 4 MB: " + e?.name;
-  }
-  // La base real: ¿coinciden las versiones que informan head, get y esta instancia?
-  const dbHead = await head(DB_KEY).catch(() => null);
-  const dbGet = await get(DB_KEY, { access: "private", useCache: false }).catch(() => null);
-  const copy = fs.existsSync(dbPath()) ? fs.readFileSync(dbPath()) : big;
-  const opts = { access: "private" as const, allowOverwrite: true, addRandomSuffix: false, contentType: "application/octet-stream" };
-  const c1 = await put(key, copy, opts);
-  const c1h = await head(key);
-  await del(key).catch(() => {});
-  return {
-    p1: p1.etag,
-    p2: p2.etag,
-    lecturas: out,
-    grande,
-    base: { local: etag, head: (dbHead as any)?.etag ?? null, get: dbGet?.blob.etag ?? null, bytes: copy.length },
-    copia: { put: c1.etag, head: (c1h as any).etag },
-  };
 }
