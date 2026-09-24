@@ -22,6 +22,11 @@ async function blob(): Promise<BlobMod> {
 }
 
 let etag: string | null = null;
+const events: string[] = [];
+function note(e: string) {
+  events.push(new Date().toISOString().slice(11, 19) + " " + e);
+  if (events.length > 30) events.shift();
+}
 let loaded = false;
 let lastCheck = 0;
 let dirty = false;
@@ -149,7 +154,7 @@ export function markDirty() {
  * Sube la base. Si otra instancia guardó en el medio y se tiene el changeset del pedido,
  * se trae la versión remota y se le aplican encima estos cambios (fusión por fila).
  */
-export function flush(changeset?: Uint8Array | null): Promise<void> {
+export function flush(changeset?: Uint8Array | null, label = "diferido"): Promise<void> {
   if (!BLOB_MODE) return Promise.resolve();
   return exclusive(async () => {
     if (!dirty) return;
@@ -174,19 +179,19 @@ export function flush(changeset?: Uint8Array | null): Promise<void> {
         }
         if (changeset && changeset.length) {
           // Fusión: base remota + cambios de este pedido.
-          console.warn(`[forja] otra instancia guardó en el medio: fusionando cambios (intento ${attempt + 1})`);
+          note(`fusión ${label}`);
           await pull(true);
           const omitted = mergeChangeset(changeset);
           if (omitted) {
             // Algunas filas chocaron con cambios de otra instancia: se respalda la versión propia.
-            await put(`${PREFIX}db/conflictos/${Date.now()}-omitidas.db`, buf, opts).catch(() => {});
+            await put(`${PREFIX}db/conflictos/${Date.now()}-${tag(label)}-omitidas${omitted}.db`, buf, opts).catch(() => {});
           }
           continue;
         }
         // Sin changeset: se respalda la versión remota y se guarda esta.
-        console.warn("[forja] conflicto de escritura sin changeset: se respalda la versión remota");
+        note(`sin changeset ${label}`);
         const remote = await get(DB_KEY, { access: "private", useCache: false });
-        if (remote?.statusCode === 200) await put(`${PREFIX}db/conflictos/${Date.now()}.db`, await readStream(remote.stream), opts);
+        if (remote?.statusCode === 200) await put(`${PREFIX}db/conflictos/${Date.now()}-${tag(label)}-sin-changeset.db`, await readStream(remote.stream), opts);
         const r = await put(DB_KEY, buf, opts);
         etag = r.etag;
         return;
@@ -195,6 +200,10 @@ export function flush(changeset?: Uint8Array | null): Promise<void> {
     dirty = true;
     throw new Error("No se pudo guardar después de varios intentos");
   });
+}
+
+function tag(s: string) {
+  return s.replace(/[^a-z0-9]+/gi, "_").slice(0, 60);
 }
 
 /** Aplica un changeset sobre la base local. Devuelve cuántos cambios se omitieron por conflicto. */
@@ -259,16 +268,17 @@ export const INCOMING_PREFIX = PREFIX + "entrantes/";
 const INSTANCE = Math.random().toString(36).slice(2, 8);
 
 export function storageInfo() {
-  return { mode: BLOB_MODE ? "blob" : "local", instance: INSTANCE, dirty, active, etag: etag ? etag.slice(-8) : null, lastCheck };
+  return { mode: BLOB_MODE ? "blob" : "local", instance: INSTANCE, dirty, active, etag: etag ? etag.slice(-8) : null, lastCheck, events };
 }
 
 /**
  * Borra del store los archivos que ya no usa nadie: material o fotos sin fila en la base,
  * subidas directas abandonadas (más de un día) y respaldos de conflictos de más de 14 días.
  */
-export async function cleanupOrphans(referenced: Set<string>): Promise<{ deleted: number; kept: number; byKind: Record<string, number> }> {
+export async function cleanupOrphans(referenced: Set<string>): Promise<{ deleted: number; kept: number; byKind: Record<string, number>; recentConflicts?: string[] }> {
   if (!BLOB_MODE) return { deleted: 0, kept: 0, byKind: {} };
   const byKind: Record<string, number> = {};
+  const conflicts: string[] = [];
   const { list, del } = await blob();
   const refKeys = new Set([...referenced].map((p) => keyFor(p)));
   const now = Date.now();
@@ -285,6 +295,7 @@ export async function cleanupOrphans(referenced: Set<string>): Promise<{ deleted
       if ((isData && !refKeys.has(b.pathname)) || (isIncoming && age > 86400_000) || (isConflict && age > 14 * 86400_000)) toDelete.push(b.url);
       else {
         kept++;
+        if (isConflict) conflicts.push(b.pathname.slice((PREFIX + "db/conflictos/").length));
         const kind = isData ? "datos" : isIncoming ? "entrantes" : isConflict ? "conflictos" : b.pathname.endsWith("forja.db") ? "base" : "otros";
         byKind[kind] = (byKind[kind] ?? 0) + 1;
       }
@@ -292,5 +303,5 @@ export async function cleanupOrphans(referenced: Set<string>): Promise<{ deleted
     cursor = r.hasMore ? r.cursor : undefined;
   } while (cursor);
   for (let i = 0; i < toDelete.length; i += 100) await del(toDelete.slice(i, i + 100));
-  return { deleted: toDelete.length, kept, byKind };
+  return { deleted: toDelete.length, kept, byKind, recentConflicts: conflicts.sort().slice(-25) };
 }

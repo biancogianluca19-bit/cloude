@@ -148,7 +148,7 @@ export function createApp() {
           release();
           return end(...args);
         }
-        flush(cs)
+        flush(cs, `${req.method} ${req.path}`)
           .catch((e) => console.error("[forja] no se pudo guardar:", e?.message ?? e))
           .finally(finish);
         return res;
