@@ -40,7 +40,16 @@ Otros comandos:
 4. Opcional: en **Settings → Domains** conectá un dominio propio y cargá la variable `NEXT_PUBLIC_SITE_URL` con esa dirección (por ejemplo `https://www.melinbooks.com.ar`). Si no la cargás, se usa el dominio `.vercel.app` del proyecto.
 5. Cambiá el link de la bio de Instagram y del Linktree por la nueva dirección.
 
-Cada vez que se sube un cambio a la rama principal, Vercel vuelve a publicar el sitio solo.
+### Publicar cambios
+
+El código vive en la rama `claude/mel-in-books-website-5lvv0s`. Para que cada cambio subido a esa rama se publique solo:
+
+1. En Vercel, abrí el proyecto `melinbooks` → **Settings → Git → Production Branch**.
+2. Escribí `claude/mel-in-books-website-5lvv0s` y guardá.
+
+Mientras no se haga ese cambio, cada push crea una vista previa; para publicarla, en **Deployments** abrí la última, menú **⋯ → Promote to Production**.
+
+El proyecto solo construye esa rama (y `main`, si algún día existe): los cambios de otros proyectos del mismo repositorio no disparan builds de esta web.
 
 ---
 
