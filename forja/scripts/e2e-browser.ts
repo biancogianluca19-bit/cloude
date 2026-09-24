@@ -10,12 +10,16 @@ fs.mkdirSync(OUT, { recursive: true });
 const DEMO = path.resolve("demo-material");
 
 const problems: string[] = [];
+/** Instancias del servidor que atendieron pedidos (solo en la versión publicada). */
+const instances = new Map<string, number>();
 function watch(page: Page, tag: string) {
   page.on("console", (m) => {
     if (m.type() === "error") problems.push(`[${tag}] consola: ${m.text()}`);
   });
   page.on("pageerror", (e) => problems.push(`[${tag}] excepción: ${e.message}`));
   page.on("response", (r) => {
+    const inst = r.headers()["x-forja-instancia"];
+    if (inst) instances.set(inst, (instances.get(inst) ?? 0) + 1);
     if (r.status() >= 400) problems.push(`[${tag}] HTTP ${r.status()} ${r.request().method()} ${r.url()}`);
   });
 }
@@ -231,6 +235,7 @@ if (process.env.E2E_CLEANUP === "1") {
 await browser.close();
 
 console.log(`\nCapturas en ${OUT}`);
+if (instances.size) console.log("Pedidos por instancia del servidor:", Object.fromEntries(instances));
 if (problems.length) {
   console.log("\nProblemas detectados:");
   for (const p of problems) console.log(" -", p);

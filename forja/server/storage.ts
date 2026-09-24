@@ -14,20 +14,19 @@ const DB_KEY = PREFIX + "db/forja.db";
 
 // Cupo del plan gratuito de Vercel Blob por mes: 2.000 operaciones avanzadas (put, list) y
 // 10.000 simples (head, get sin caché). Pasado el cupo, el store queda bloqueado 30 días.
-// Por eso los cambios se agrupan: se suben cuando pasan unos segundos sin actividad.
+// Por eso los cambios se agrupan: se suben 2 minutos después del primero (o antes, si el navegador
+// avisa que la app pasó a segundo plano). Así, estudiando sin parar, son como mucho 30 subidas por hora.
 export const BLOB_QUOTA = { advanced: 2000, simple: 10000 };
-const IDLE_FLUSH_MS = 15_000;
-const MAX_PENDING_MS = 45_000;
-/** Con el cupo muy usado, se agrupa más todavía. */
-const SAVING_IDLE_MS = 60_000;
-const SAVING_MAX_MS = 180_000;
+const FLUSH_AFTER_MS = 120_000;
+/** Con el cupo muy usado, se agrupa más todavía (por debajo de los 300 s que vive la función). */
+const SAVING_FLUSH_AFTER_MS = 270_000;
 /** Cada cuánto una lectura vuelve a mirar el store aunque el navegador ya tenga esta versión. */
 const RECHECK_READ_MS = 5 * 60_000;
 const RECHECK_WRITE_MS = 60_000;
 /** Lectura sin versión del navegador (otro dispositivo, primera visita). */
 const CHECK_EVERY_MS = 15_000;
 /** Cuánto se espera a que otra instancia suba sus cambios pendientes. */
-const WAIT_OTHER_MS = 25_000;
+const WAIT_OTHER_MS = 30_000;
 
 type BlobMod = typeof import("@vercel/blob");
 let mod: BlobMod | null = null;
@@ -211,10 +210,8 @@ function savingMode(): boolean {
 
 function schedule() {
   if (timer) clearTimeout(timer);
-  const saving = savingMode();
-  const idle = saving ? SAVING_IDLE_MS : IDLE_FLUSH_MS;
-  const max = saving ? SAVING_MAX_MS : MAX_PENDING_MS;
-  const delay = Math.max(0, Math.min(idle, dirtySince + max - Date.now()));
+  const after = savingMode() ? SAVING_FLUSH_AFTER_MS : FLUSH_AFTER_MS;
+  const delay = Math.max(0, dirtySince + after - Date.now());
   timer = setTimeout(() => {
     timer = null;
     flush().catch((e) => console.error("[forja] no se pudo guardar la base:", e?.message ?? e));
@@ -253,6 +250,12 @@ export async function flush(): Promise<void> {
 const USAGE_BEFORE_COUNTER: Record<string, { advanced: number; simple: number }> = {
   "blob_ops:2026-09": { advanced: 900, simple: 3500 },
 };
+
+/** Sube ya los cambios pendientes desde dentro de un pedido (que ya tiene el turno de la instancia). */
+export function flushNow(): Promise<void> {
+  if (!BLOB_MODE || !dirty) return Promise.resolve();
+  return exclusive(flushLocked);
+}
 
 /** Mes calendario (UTC) para contar operaciones. */
 function monthKey() {

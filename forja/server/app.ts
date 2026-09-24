@@ -21,7 +21,7 @@ import { gradePhoto, savePhoto, photoPathFromToken } from "./ai/photo.ts";
 import { aiAvailable, model, testConnection, DEFAULT_MODEL } from "./ai/llm.ts";
 import { invalidateIndex, search } from "./retrieval/search.ts";
 import { requireAuth, login, logout, authRequired, isAuthed } from "./auth.ts";
-import { BLOB_MODE, syncBefore, recordChange, currentVersion, acquireRequestSlot, persistFile, removeFile, ensureLocalFile, takeIncoming, INCOMING_PREFIX, storageInfo, cleanupOrphans } from "./storage.ts";
+import { BLOB_MODE, syncBefore, recordChange, flushNow, currentVersion, acquireRequestSlot, persistFile, removeFile, ensureLocalFile, takeIncoming, INCOMING_PREFIX, storageInfo, cleanupOrphans } from "./storage.ts";
 import { getDb } from "./db.ts";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 60 * 1024 * 1024, files: 30 } });
@@ -140,6 +140,7 @@ export function createApp() {
         if (changed) recordChange(cs, `${req.method} ${req.path}`);
         const v = currentVersion();
         if (v && !res.headersSent) res.setHeader("x-forja-version", v);
+        if (!res.headersSent) res.setHeader("x-forja-instancia", storageInfo().instance);
         release();
         return end(...args);
       };
@@ -153,6 +154,11 @@ export function createApp() {
   // ------------------------------------------------------------ Estado y ajustes
   app.get("/api/status", h(() => ({ ai: aiAvailable(), model: model(), demo: !aiAvailable(), keySource: process.env.ANTHROPIC_API_KEY ? "entorno" : getSetting("anthropic_api_key") ? "ajustes" : null, storage: storageInfo().mode, auth: authRequired() })));
   app.get("/api/status/storage", h(() => storageInfo()));
+  // El navegador avisa que la app pasó a segundo plano: se suben ya los cambios pendientes.
+  app.post("/api/sync", h(async () => {
+    await flushNow();
+    return { ok: true };
+  }));
   app.post(
     "/api/maintenance/cleanup",
     h(async (req) => {

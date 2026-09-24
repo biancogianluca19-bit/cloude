@@ -41,6 +41,12 @@ window.fetch = async (input: RequestInfo | URL, init: RequestInit = {}) => {
   return res;
 };
 
+// Si quedaron cambios sin subir al almacenamiento (la versión lo indica con "|"), al pasar la app
+// a segundo plano se pide guardarlos ya: el servidor los agrupa y los sube cada 2 minutos.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden" && version?.includes("|")) navigator.sendBeacon?.("/api/sync");
+});
+
 async function parse(res: Response) {
   const ct = res.headers.get("content-type") ?? "";
   const body = ct.includes("json") ? await res.json() : await res.text();
