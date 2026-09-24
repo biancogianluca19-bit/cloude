@@ -18,6 +18,12 @@ let version: string | null = (() => {
   }
 })();
 const _fetch = window.fetch.bind(window);
+let queue: Promise<unknown> = Promise.resolve();
+function queued<T>(fn: () => Promise<T>): Promise<T> {
+  const run = queue.then(fn, fn);
+  queue = run.catch(() => {});
+  return run;
+}
 window.fetch = async (input: RequestInfo | URL, init: RequestInit = {}) => {
   const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
   const same = url.startsWith("/api/") || url.startsWith(location.origin + "/api/");
@@ -26,7 +32,9 @@ window.fetch = async (input: RequestInfo | URL, init: RequestInit = {}) => {
     h.set("x-forja-version", version);
     init = { ...init, headers: h };
   }
-  const res = await _fetch(input, init);
+  // En la versión publicada los pedidos van de a uno: si salen en paralelo, Vercel los reparte
+  // entre instancias distintas y cada una tiene su copia de la base.
+  const res = same && version ? await queued(() => _fetch(input, init)) : await _fetch(input, init);
   if (same) {
     const v = res.headers.get("x-forja-version");
     if (v && v !== version) {
