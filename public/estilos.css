@@ -23,30 +23,6 @@
   --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   --r: 10px;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --bg: #0F1412;
-    --surface: #171D1A;
-    --surface-2: #1D2521;
-    --ink: #E6ECE9;
-    --ink-2: #AEB9B3;
-    --muted: #7F8B85;
-    --line: #2B3531;
-    --accent: #8FA3F0;
-    --accent-ink: #0F1412;
-    --accent-soft: #232B45;
-    --gasto: #F08C7A;
-    --gasto-soft: #3A211D;
-    --ingreso: #6FCB97;
-    --ingreso-soft: #173125;
-    --warn: #E7B85A;
-    --warn-soft: #33290F;
-    --bar: #8FA3F0;
-    --bar-dim: #3B477A;
-    --shadow: 0 1px 2px rgba(0, 0, 0, .3);
-  }
-}
 :root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #0F1412;
@@ -288,3 +264,8 @@ details.ajustes summary { cursor: pointer; font-weight: 600; font-family: var(--
   .pres-row { grid-template-columns: minmax(84px, 110px) minmax(0, 1fr) auto; }
   .topes { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Botón de tema */
+.top-der { display: flex; align-items: center; gap: 8px; }
+.tema { border: 1px solid var(--line); background: var(--surface); width: 34px; height: 34px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
+.tema svg { width: 17px; height: 17px; }

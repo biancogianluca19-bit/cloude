@@ -6,6 +6,7 @@
 <title>Libreta de Plata</title>
 <meta name="description" content="Tus ingresos y gastos diarios, cargados por Telegram o WhatsApp, o dictados acá, con presupuesto mensual por categoría.">
 <meta name="theme-color" content="#EDF0EE">
+<script>try{if(localStorage.getItem('libreta-plata-tema')==='oscuro')document.documentElement.dataset.theme='dark'}catch(e){}</script>
 <meta name="robots" content="noindex">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,16 +22,21 @@
       <h1>Libreta de Plata</h1>
       <span class="estado" id="estado" data-modo="cargando"><i></i><span id="estado-txt">Conectando…</span></span>
     </div>
-    <nav class="mesnav" aria-label="Cambiar de mes">
-      <button type="button" id="mes-ant" aria-label="Mes anterior">‹</button>
-      <span class="mes" id="mes-txt"></span>
-      <button type="button" id="mes-sig" aria-label="Mes siguiente">›</button>
-    </nav>
+    <div class="top-der">
+      <nav class="mesnav" id="mesnav" aria-label="Cambiar de mes" hidden>
+        <button type="button" id="mes-ant" aria-label="Mes anterior">‹</button>
+        <span class="mes" id="mes-txt"></span>
+        <button type="button" id="mes-sig" aria-label="Mes siguiente">›</button>
+      </nav>
+      <button type="button" class="tema" id="btn-tema" aria-label="Cambiar a modo oscuro" title="Modo claro / oscuro">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>
+      </button>
+    </div>
   </header>
 
   <section class="card" id="login" hidden aria-labelledby="login-h">
     <h2 id="login-h">Entrá a tu libreta</h2>
-    <p class="hint">Escribí la clave que pusiste en Vercel como <span class="num">CLAVE_WEB</span>. Queda guardada en este navegador.</p>
+    <p class="hint">Escribí tu clave de la libreta. Queda guardada en este navegador y no te la vuelve a pedir.</p>
     <form id="login-form" class="fila">
       <input type="password" id="clave" autocomplete="current-password" placeholder="Clave" class="campo" required>
       <button type="submit" class="btn primario">Entrar</button>

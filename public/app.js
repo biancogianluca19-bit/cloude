@@ -5,6 +5,7 @@
   const DIAS_C = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
   const DIAS_L = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
   const LS_CLAVE = 'libreta-plata-clave';
+  const LS_TEMA = 'libreta-plata-tema';
 
   const hoyIso = () => iso(new Date());
   const mesDe = f => f.slice(0, 7);
@@ -34,6 +35,13 @@
   };
   let clave = '';
   try { clave = localStorage.getItem(LS_CLAVE) || ''; } catch (e) {}
+  // Un link con ?clave=... entra directo y la guarda; después se borra de la barra de direcciones.
+  const claveUrl = new URLSearchParams(location.search).get('clave');
+  if (claveUrl) {
+    clave = claveUrl;
+    try { localStorage.setItem(LS_CLAVE, clave); } catch (e) {}
+    history.replaceState(null, '', location.pathname);
+  }
 
   // ---------- Servidor ----------
   async function api(ruta, opciones = {}) {
@@ -76,7 +84,7 @@
   function pedirClave(error) {
     clave = '';
     try { localStorage.removeItem(LS_CLAVE); } catch (e) {}
-    $('login').hidden = false; $('contenido').hidden = true;
+    $('login').hidden = false; $('contenido').hidden = true; $('mesnav').hidden = true;
     $('login-error').hidden = !error; $('login-error').textContent = error || '';
     S.modo = 'cargando'; renderEstado();
     $('clave').focus();
@@ -88,7 +96,7 @@
     try {
       await api('ajustes');
       try { localStorage.setItem(LS_CLAVE, clave); } catch (e) {}
-      $('login').hidden = true; $('contenido').hidden = false; $('clave').value = '';
+      $('login').hidden = true; $('contenido').hidden = false; $('mesnav').hidden = false; $('clave').value = '';
       refrescar();
     } catch (e) { if (e.message !== '401') { $('login-error').hidden = false; $('login-error').textContent = 'No pude conectar con el servidor: ' + e.message; } }
   });
@@ -552,7 +560,15 @@
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !edicion && !S.editandoTopes) refrescar(true); });
   setInterval(() => { if (document.visibilityState === 'visible' && !edicion && !S.editandoTopes && !S.borrador.length) refrescar(true); }, 60000);
 
+  function aplicarTema(oscuro) {
+    if (oscuro) document.documentElement.dataset.theme = 'dark'; else delete document.documentElement.dataset.theme;
+    $('btn-tema').setAttribute('aria-label', oscuro ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
+    try { localStorage.setItem(LS_TEMA, oscuro ? 'oscuro' : 'claro'); } catch (e) {}
+    renderGrafico();
+  }
+  $('btn-tema').addEventListener('click', () => aplicarTema(document.documentElement.dataset.theme !== 'dark'));
+
   iniciarVoz();
-  if (clave) { $('contenido').hidden = false; render(); refrescar(); }
+  if (clave) { $('contenido').hidden = false; $('mesnav').hidden = false; render(); refrescar(); }
   else pedirClave();
 })();
