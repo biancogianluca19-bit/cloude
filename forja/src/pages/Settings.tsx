@@ -127,7 +127,7 @@ export function SettingsPage() {
         <h3>Usar FORJA desde el celular</h3>
         <p className="muted small mt-8">
           {status.data?.storage === "blob"
-            ? "Esta es la versión publicada: abrí la misma dirección desde el celular e iniciá sesión. Desde el menú del navegador podés agregarla a la pantalla de inicio."
+            ? "Esta es la versión publicada: abrí la misma dirección desde el celular e iniciá sesión. Para tenerla como app: en iPhone, Safari → Compartir → Agregar a inicio; en Android, Chrome → menú ⋮ → Instalar app."
             : "Con el servidor corriendo en tu computadora, abrí en el celular la dirección que muestra la terminal al iniciar (por ejemplo http://192.168.0.10:3717), conectado a la misma red wifi. Desde el menú del navegador podés agregarla a la pantalla de inicio."}
         </p>
       </div>

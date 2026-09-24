@@ -334,8 +334,9 @@ p {
     display: none;
   }
   .topbar {
-    padding: 10px 16px;
-    min-height: 52px;
+    /* Con la app instalada en iPhone, la barra de estado queda encima: se deja su espacio. */
+    padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+    min-height: calc(52px + env(safe-area-inset-top));
   }
   .content {
     padding: 4px 16px calc(96px + env(safe-area-inset-bottom));

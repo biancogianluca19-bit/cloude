@@ -155,12 +155,12 @@ export function createApp() {
   app.get("/api/status/storage", h(() => storageInfo()));
   app.post(
     "/api/maintenance/cleanup",
-    h(async () => {
+    h(async (req) => {
       const refs = new Set<string>([
         ...all<{ path: string }>("SELECT path FROM files").map((r) => r.path),
         ...all<{ photo_path: string }>("SELECT photo_path FROM attempts WHERE photo_path IS NOT NULL").map((r) => r.photo_path),
       ]);
-      return cleanupOrphans(refs);
+      return cleanupOrphans(refs, { allConflicts: req.body?.respaldos === "todos" });
     }),
   );
   app.put(

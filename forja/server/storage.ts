@@ -249,6 +249,11 @@ export async function flush(): Promise<void> {
   }
 }
 
+/** Uso estimado antes de que existiera el contador (pruebas de la publicación inicial). */
+const USAGE_BEFORE_COUNTER: Record<string, { advanced: number; simple: number }> = {
+  "blob_ops:2026-09": { advanced: 900, simple: 3500 },
+};
+
 /** Mes calendario (UTC) para contar operaciones. */
 function monthKey() {
   return "blob_ops:" + new Date().toISOString().slice(0, 7);
@@ -257,7 +262,7 @@ function monthKey() {
 /** Operaciones del mes registradas en la base (aproximado: suma lo que contó cada instancia). */
 export function monthUsage(): { advanced: number; simple: number } {
   const raw = getDb().prepare("SELECT value FROM settings WHERE key = ?").get(monthKey()) as { value: string } | undefined;
-  const saved = raw ? (JSON.parse(raw.value) as { advanced: number; simple: number }) : { advanced: 0, simple: 0 };
+  const saved = raw ? (JSON.parse(raw.value) as { advanced: number; simple: number }) : { ...(USAGE_BEFORE_COUNTER[monthKey()] ?? { advanced: 0, simple: 0 }) };
   return { advanced: saved.advanced + ops.advanced, simple: saved.simple + ops.simple };
 }
 
@@ -430,9 +435,10 @@ export function storageInfo() {
 
 /**
  * Borra del store los archivos que ya no usa nadie: material o fotos sin fila en la base,
- * subidas directas abandonadas (más de un día) y respaldos de conflictos de más de 14 días.
+ * subidas directas abandonadas (más de un día) y respaldos de conflictos de más de 14 días
+ * (o todos, con allConflicts).
  */
-export async function cleanupOrphans(referenced: Set<string>): Promise<{ deleted: number; kept: number; byKind: Record<string, number>; recentConflicts?: string[] }> {
+export async function cleanupOrphans(referenced: Set<string>, opts: { allConflicts?: boolean } = {}): Promise<{ deleted: number; kept: number; byKind: Record<string, number>; recentConflicts?: string[] }> {
   if (!BLOB_MODE) return { deleted: 0, kept: 0, byKind: {} };
   const byKind: Record<string, number> = {};
   const conflicts: string[] = [];
@@ -450,7 +456,7 @@ export async function cleanupOrphans(referenced: Set<string>): Promise<{ deleted
       const isData = b.pathname.startsWith(PREFIX + "data/");
       const isIncoming = b.pathname.startsWith(INCOMING_PREFIX);
       const isConflict = b.pathname.startsWith(PREFIX + "db/conflictos/");
-      if ((isData && !refKeys.has(b.pathname)) || (isIncoming && age > 86400_000) || (isConflict && age > 14 * 86400_000)) toDelete.push(b.url);
+      if ((isData && !refKeys.has(b.pathname)) || (isIncoming && age > 86400_000) || (isConflict && (opts.allConflicts || age > 14 * 86400_000))) toDelete.push(b.url);
       else {
         kept++;
         if (isConflict) conflicts.push(b.pathname.slice((PREFIX + "db/conflictos/").length));
