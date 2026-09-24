@@ -5,6 +5,7 @@ Sitio oficial de **Mel In Books**, resúmenes y material de estudio para UBA XXI
 Quien entra desde Instagram busca su materia, elige cátedra y opción (un parcial, el combo, el final), arma su pedido y lo envía por WhatsApp con el mensaje ya escrito. Mel solo tiene que responder, cobrar y mandar el PDF.
 
 - **Stack:** Next.js 16 (App Router) + TypeScript + Tailwind CSS 4. Sin base de datos ni panel: todo el contenido está en la carpeta `data/`.
+- **Sitio estático:** `npm run build` genera la carpeta `out/` con HTML, CSS, JS e imágenes. No necesita servidor: se puede publicar en Vercel (configurado) o en cualquier hosting de archivos.
 - **Dependencias de producción:** `next`, `react`, `react-dom` y `@vercel/analytics`.
 
 ---
@@ -24,7 +25,7 @@ Otros comandos:
 | Comando             | Qué hace                                                  |
 | ------------------- | --------------------------------------------------------- |
 | `npm run build`     | Arma la versión de producción (hay que correrlo antes de publicar). |
-| `npm start`         | Sirve la versión de producción ya armada.                 |
+| `npm start`         | Sirve la versión ya armada (carpeta `out/`) en http://localhost:3000. |
 | `npm test`          | Pruebas del mensaje de WhatsApp, del buscador y del catálogo. |
 | `npm run lint`      | Revisa el código.                                         |
 | `npm run typecheck` | Revisa los tipos de TypeScript.                           |
@@ -33,7 +34,7 @@ Otros comandos:
 
 1. En [vercel.com](https://vercel.com) → **Add New… → Project** → importá este repositorio de GitHub.
 2. En **Root Directory** elegí `melinbooks` (el repositorio tiene otro proyecto en la raíz).
-3. Framework: Next.js (se detecta solo). No hace falta cambiar nada más. Tocá **Deploy**.
+3. No hace falta tocar nada más: `melinbooks/vercel.json` ya indica cómo armarlo (`npm run build`) y qué publicar (la carpeta `out/`). Tocá **Deploy**.
 4. Opcional: en **Settings → Domains** conectá un dominio propio y cargá la variable `NEXT_PUBLIC_SITE_URL` con esa dirección (por ejemplo `https://www.melinbooks.com.ar`). Si no la cargás, se usa el dominio `.vercel.app` del proyecto.
 5. Cambiá el link de la bio de Instagram y del Linktree por la nueva dirección.
 
@@ -191,7 +192,7 @@ Detalles técnicos:
 - Animaciones con CSS, sin librerías. Con "reducir movimiento" activado en el teléfono, se desactivan.
 - Diálogos con `<dialog>` nativo: se cierran con Escape o tocando afuera, y mantienen el foco dentro.
 - El buscador ignora tildes y mayúsculas y busca en materia, sigla, nombre completo, cátedra, programa y palabras clave.
-- El catálogo guarda la búsqueda y los filtros en la URL (`/catalogo?q=ipc&programa=uba-xxi`), así se pueden compartir.
+- El catálogo guarda la búsqueda y los filtros en la URL (`/catalogo?q=ipc&programa=uba-xxi`), así se pueden compartir. Como el sitio es estático, la URL se lee en el navegador; el HTML trae el catálogo completo.
 - SEO: título y descripción por página, Open Graph y Twitter, `sitemap.xml`, `robots.txt`, URLs limpias y datos estructurados (tienda, productos con precios, preguntas frecuentes).
 - Lighthouse en celular: Accesibilidad, Buenas prácticas y SEO en 100; Rendimiento entre 93 y 97.
 

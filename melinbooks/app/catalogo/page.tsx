@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { programs, type ProgramId } from "@/data/catalog";
+import { Suspense } from "react";
 import { productCount } from "@/lib/products";
 import { CatalogBrowser } from "@/components/catalog/CatalogBrowser";
+import { CatalogFromUrl } from "@/components/catalog/CatalogFromUrl";
 import { eyebrow } from "@/components/ui/styles";
 
 export const metadata: Metadata = {
@@ -11,19 +12,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/catalogo" },
 };
 
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
-
-function first(v: string | string[] | undefined): string {
-  return (Array.isArray(v) ? v[0] : v) ?? "";
-}
-
-export default async function CatalogPage({ searchParams }: { searchParams: SearchParams }) {
-  const params = await searchParams;
-  const programParam = first(params.programa);
-  const program = programs.find((p) => p.id === programParam);
-  const groupParam = first(params.grupo);
-  const group = program?.groups.some((g) => g.id === groupParam) ? groupParam : "";
-
+export default function CatalogPage() {
   return (
     <div className="paper-grain">
       <div className="mx-auto max-w-6xl px-4 pb-8 pt-5 md:px-6 md:pt-12">
@@ -35,10 +24,11 @@ export default async function CatalogPage({ searchParams }: { searchParams: Sear
           {productCount} materiales para UBA XXI, CBC y Edición (FILO).
         </p>
         <div className="mt-3 md:mt-6">
-          <CatalogBrowser
-            initial={{ q: first(params.q).slice(0, 80), program: (program?.id ?? "") as ProgramId | "", group }}
-            autoFocus={first(params.buscar) === "1"}
-          />
+          {/* La página es estática: la búsqueda de la URL se aplica en el navegador.
+              Mientras tanto se muestra el catálogo completo (sirve también para Google). */}
+          <Suspense fallback={<CatalogBrowser initial={{ q: "", program: "", group: "" }} autoFocus={false} />}>
+            <CatalogFromUrl />
+          </Suspense>
         </div>
       </div>
     </div>
