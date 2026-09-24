@@ -1,0 +1,20 @@
+import { chromium } from "playwright";
+import fs from "node:fs";
+const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", proxy: { server: process.env.HTTPS_PROXY!, bypass: "localhost,127.0.0.1" }, args: ["--disable-http2"] });
+const ctx = await b.newContext({ ignoreHTTPSErrors: true });
+await ctx.route(/vercel-storage\.com|vercel\.com\/api\/blob/, async (route) => {  try { const r = await route.fetch(); console.log("ROUTE-RESP", r.status()); await route.fulfill({ response: r }); } catch (e) { console.log("ROUTE-ERR", String(e).slice(0, 200)); await route.abort(); } });
+const p = await ctx.newPage();
+p.on("requestfailed", (r) => console.log("FAIL", r.method(), r.url().slice(0, 120), r.failure()?.errorText));
+p.on("response", async (r) => { if (!r.url().includes("/assets/")) console.log("RESP", r.status(), r.request().method(), r.url().slice(0, 100)); });
+p.on("console", (m) => (m.type() === "error" || m.type() === "warning") && console.log("CONSOLE", m.text().slice(0, 300)));
+await p.goto("http://localhost:4455/");
+await p.getByLabel("Contraseña").fill("forjado-carbon-5654-brasa");
+await p.getByRole("button", { name: "Entrar" }).click();
+await p.getByRole("heading", { name: "Tus materias" }).waitFor();
+const s = await p.evaluate(async () => (await fetch("/api/subjects", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: "Sonda" }) })).json());
+await p.goto(`http://localhost:4455/m/${s.id}/material`);
+await p.waitForTimeout(1500);
+await p.locator('input[type="file"]').first().setInputFiles(fs.readdirSync("demo-material").map((f) => ({ name: f, mimeType: "application/octet-stream", buffer: fs.readFileSync("demo-material/" + f) })));
+for (let i = 0; i < 15; i++) { await p.waitForTimeout(4000); console.log("DZ:", (await p.locator(".dropzone").innerText()).split("\n")[0]); }
+await p.evaluate(async (id) => fetch(`/api/subjects/${id}`, { method: "DELETE" }), s.id);
+await b.close();

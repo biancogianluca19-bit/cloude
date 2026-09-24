@@ -49,6 +49,7 @@ function Login({ onDone }: { onDone: () => void }) {
           <h2>Entrar</h2>
           <p className="small muted">Esta instalación de FORJA es privada.</p>
         </div>
+        <input type="text" name="username" autoComplete="username" value="forja" readOnly hidden />
         <div className="field">
           <label htmlFor="pw">Contraseña</label>
           <input id="pw" className="input" type="password" autoFocus autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} />

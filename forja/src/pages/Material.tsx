@@ -56,7 +56,8 @@ export function MaterialPage() {
     try {
       const list = await Promise.all(raw.map((f) => shrinkImage(f)));
       let r: any;
-      if (status.data?.storage === "blob") {
+      const mode = status.data?.storage ?? (await api.get("/api/status")).storage;
+      if (mode === "blob") {
         // Versión publicada: cada archivo va directo al almacenamiento privado y después se procesa.
         const { upload: direct } = await import("@vercel/blob/client");
         const items: { pathname: string; name: string }[] = [];

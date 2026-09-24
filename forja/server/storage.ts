@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { waitUntil } from "@vercel/functions";
 import { DATA_DIR, closeDb, dbPath, getDb } from "./db.ts";
 
 // Persistencia para entornos sin disco propio (Vercel). La base SQLite vive en /tmp y se
@@ -9,8 +10,8 @@ import { DATA_DIR, closeDb, dbPath, getDb } from "./db.ts";
 export const BLOB_MODE = !!process.env.BLOB_READ_WRITE_TOKEN && process.env.FORJA_STORAGE !== "local";
 const PREFIX = process.env.FORJA_BLOB_PREFIX ?? "forja/";
 const DB_KEY = PREFIX + "db/forja.db";
-const CHECK_EVERY_MS = 60_000;
-const FLUSH_DELAY_MS = 2_500;
+const CHECK_EVERY_MS = 15_000;
+const FLUSH_DELAY_MS = 1_200;
 
 type BlobMod = typeof import("@vercel/blob");
 let mod: BlobMod | null = null;
@@ -25,6 +26,15 @@ let lastCheck = 0;
 let dirty = false;
 let timer: ReturnType<typeof setTimeout> | null = null;
 let lock: Promise<unknown> = Promise.resolve();
+/** Pedidos en curso en esta instancia: mientras haya alguno, no se reemplaza la base local. */
+let active = 0;
+
+export function enterRequest() {
+  active++;
+}
+export function leaveRequest() {
+  active = Math.max(0, active - 1);
+}
 
 /** Serializa las operaciones de sincronización dentro de la instancia. */
 function exclusive<T>(fn: () => Promise<T>): Promise<T> {
@@ -71,8 +81,12 @@ async function pull(force = false) {
  */
 export async function syncBefore(write: boolean) {
   if (!BLOB_MODE) return;
+  // Antes de escribir, lo pendiente de esta instancia se sube primero; así, si otra instancia
+  // escribió después, se trae su versión sin pisar nada.
+  if (write && dirty) await flush();
   await exclusive(async () => {
-    if (dirty) return; // hay cambios locales sin subir: la copia local es la más nueva
+    if (dirty) return; // lectura con cambios locales sin subir: la copia local es la más nueva
+    if (loaded && active > 0) return; // otro pedido está usando la base en esta instancia
     if (loaded && !write && Date.now() - lastCheck < CHECK_EVERY_MS) return;
     await pull();
     loaded = true;
@@ -92,7 +106,12 @@ export function markDirty() {
         .finally(resolve);
     }, FLUSH_DELAY_MS);
   });
-  import("@vercel/functions").then(({ waitUntil }) => waitUntil(done)).catch(() => {});
+  // Tiene que llamarse durante el pedido: mantiene viva la función hasta terminar de guardar.
+  try {
+    waitUntil(done);
+  } catch {
+    /* fuera de Vercel no hace falta */
+  }
 }
 
 export function flush(): Promise<void> {

@@ -21,7 +21,7 @@ import { gradePhoto, savePhoto, photoPathFromToken } from "./ai/photo.ts";
 import { aiAvailable, model, testConnection, DEFAULT_MODEL } from "./ai/llm.ts";
 import { invalidateIndex, search } from "./retrieval/search.ts";
 import { requireAuth, login, logout, authRequired, isAuthed } from "./auth.ts";
-import { BLOB_MODE, syncBefore, markDirty, persistFile, ensureLocalFile, takeIncoming, INCOMING_PREFIX, storageInfo } from "./storage.ts";
+import { BLOB_MODE, syncBefore, markDirty, enterRequest, leaveRequest, persistFile, ensureLocalFile, takeIncoming, INCOMING_PREFIX, storageInfo } from "./storage.ts";
 import { getDb } from "./db.ts";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 60 * 1024 * 1024, files: 30 } });
@@ -104,14 +104,23 @@ export function createApp() {
     try {
       await syncBefore(req.method !== "GET");
       const before = BLOB_MODE ? Number((getDb().prepare("SELECT total_changes() n").get() as any).n) : 0;
+      if (BLOB_MODE) enterRequest();
+      let left = false;
+      const leave = () => {
+        if (!left && BLOB_MODE) leaveRequest();
+        left = true;
+      };
+      res.on("close", leave);
       if (BLOB_MODE)
         res.on("finish", () => {
           try {
+            // Solo se guarda si el pedido realmente cambió la base.
             const after = Number((getDb().prepare("SELECT total_changes() n").get() as any).n);
-            if (after !== before || req.method !== "GET") markDirty();
+            if (after !== before) markDirty();
           } catch {
             markDirty();
           }
+          leave();
         });
       next();
     } catch (e) {

@@ -24,7 +24,7 @@ vi.mock("@vercel/blob", () => ({
       throw e;
     }
     if (opts.ifNoneMatch && opts.ifNoneMatch === cur.etag) return { statusCode: 304, stream: null, blob: { etag: cur.etag } };
-    return { statusCode: 200, stream: new Blob([cur.buf]).stream(), blob: { etag: cur.etag } };
+    return { statusCode: 200, stream: new Blob([new Uint8Array(cur.buf)]).stream(), blob: { etag: cur.etag } };
   }),
   del: vi.fn(async (key: string) => void store.delete(key)),
 }));

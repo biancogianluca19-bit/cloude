@@ -20,7 +20,25 @@ function watch(page: Page, tag: string) {
   });
 }
 
-const browser = await chromium.launch().catch(() => chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" }));
+const proxy = process.env.E2E_INSECURE === "1" && process.env.HTTPS_PROXY ? { server: process.env.HTTPS_PROXY, bypass: "localhost,127.0.0.1" } : undefined;
+const args = proxy ? ["--disable-http2"] : [];
+const browser = await chromium.launch({ proxy, args }).catch(() => chromium.launch({ proxy, args, executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" }));
+
+const PASSWORD = process.env.FORJA_PASSWORD_E2E;
+async function loginIfNeeded(page: Page) {
+  const pw = page.getByLabel("Contraseña");
+  // Esperar a que la app decida: formulario de login o contenido.
+  const which = await Promise.race([
+    pw.waitFor({ timeout: 20000 }).then(() => "login"),
+    page.locator(".app").waitFor({ timeout: 20000 }).then(() => "app"),
+  ]).catch(() => "app");
+  if (which === "login") {
+    if (!PASSWORD) throw new Error("La instalación pide contraseña: definí FORJA_PASSWORD_E2E");
+    await pw.fill(PASSWORD);
+    await page.getByRole("button", { name: "Entrar" }).click();
+    await page.waitForLoadState("networkidle");
+  }
+}
 
 async function shot(page: Page, name: string) {
   await page.waitForTimeout(350);
@@ -32,12 +50,16 @@ function step(msg: string) {
 }
 
 // ------------------------------------------------------------------ Escritorio
-const desk = await browser.newContext({ viewport: { width: 1360, height: 880 }, colorScheme: "dark" });
+const INSECURE = process.env.E2E_INSECURE === "1"; // solo para entornos con proxy que re-firma HTTPS
+const desk = await browser.newContext({ viewport: { width: 1360, height: 880 }, colorScheme: "dark", ignoreHTTPSErrors: INSECURE });
+// En entornos con proxy inestable, los pedidos al almacenamiento de Vercel se hacen desde Playwright.
+if (INSECURE) await desk.route(/vercel-storage\.com|vercel\.com\/api\/blob/, async (route) => route.fulfill({ response: await route.fetch() }));
 const page = await desk.newPage();
 watch(page, "escritorio");
 
 step("Inicio");
 await page.goto(BASE + "/");
+await loginIfNeeded(page);
 await page.getByRole("heading", { name: "Tus materias" }).waitFor();
 await shot(page, "01-materias");
 
@@ -159,11 +181,12 @@ await page.getByRole("heading", { name: "Memoria de errores" }).waitFor();
 await desk.close();
 
 // ------------------------------------------------------------------ Celular
-const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, colorScheme: "light" });
+const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, colorScheme: "light", ignoreHTTPSErrors: INSECURE });
 const m = await phone.newPage();
 watch(m, "celular");
 step("Celular: Hoy");
 await m.goto(newSubjectUrl);
+await loginIfNeeded(m);
 await m.getByText("Qué estudiar ahora").waitFor();
 await shot(m, "20-cel-hoy");
 const overflow = await m.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -186,6 +209,18 @@ await m.goto(newSubjectUrl + "/mapa");
 await m.getByRole("heading", { name: "Mapa de temas" }).waitFor();
 await shot(m, "24-cel-mapa");
 await phone.close();
+
+if (process.env.E2E_CLEANUP === "1") {
+  step("Limpieza: borrar la materia de prueba");
+  const ctx = await browser.newContext({ ignoreHTTPSErrors: INSECURE });
+  const p = await ctx.newPage();
+  await p.goto(newSubjectUrl + "/config");
+  await loginIfNeeded(p);
+  p.on("dialog", (d) => d.accept());
+  await p.getByRole("button", { name: "Borrar", exact: true }).click();
+  await p.waitForURL(BASE + "/");
+  await ctx.close();
+}
 await browser.close();
 
 console.log(`\nCapturas en ${OUT}`);
