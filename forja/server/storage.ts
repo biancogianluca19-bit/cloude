@@ -262,13 +262,19 @@ function monthKey() {
 /** Operaciones del mes registradas en la base (aproximado: suma lo que contó cada instancia). */
 export function monthUsage(): { advanced: number; simple: number } {
   const raw = getDb().prepare("SELECT value FROM settings WHERE key = ?").get(monthKey()) as { value: string } | undefined;
-  const saved = raw ? (JSON.parse(raw.value) as { advanced: number; simple: number }) : { ...(USAGE_BEFORE_COUNTER[monthKey()] ?? { advanced: 0, simple: 0 }) };
+  const saved = raw ? (JSON.parse(raw.value) as { advanced: number; simple: number; base?: boolean }) : { advanced: 0, simple: 0 };
+  // La estimación previa se suma una sola vez (queda marcada con base: true al guardar).
+  const before = USAGE_BEFORE_COUNTER[monthKey()];
+  if (before && !saved.base) {
+    saved.advanced += before.advanced;
+    saved.simple += before.simple;
+  }
   return { advanced: saved.advanced + ops.advanced, simple: saved.simple + ops.simple };
 }
 
 /** Anota en la base las operaciones contadas (queda incluido en la subida que sigue). */
 function stampUsage() {
-  const u = monthUsage();
+  const u = { ...monthUsage(), base: true };
   u.advanced += 1; // la subida que viene
   getDb().prepare("INSERT INTO settings(key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(monthKey(), JSON.stringify(u));
 }
