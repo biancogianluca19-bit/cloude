@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { createRequire } from "node:module";
 import { waitUntil } from "@vercel/functions";
 import { DATA_DIR, closeDb, dbPath, getDb } from "./db.ts";
 
@@ -26,14 +27,29 @@ let lastCheck = 0;
 let dirty = false;
 let timer: ReturnType<typeof setTimeout> | null = null;
 let lock: Promise<unknown> = Promise.resolve();
-/** Pedidos en curso en esta instancia: mientras haya alguno, no se reemplaza la base local. */
+/** Pedidos en curso en esta instancia (informativo). */
 let active = 0;
+let requestQueue: Promise<unknown> = Promise.resolve();
 
-export function enterRequest() {
-  active++;
-}
-export function leaveRequest() {
-  active = Math.max(0, active - 1);
+/**
+ * En la versión publicada, cada instancia atiende los pedidos de a uno: ninguna escritura
+ * corre sobre una copia desactualizada. Devuelve la función para liberar el turno.
+ */
+export function acquireRequestSlot(): Promise<() => void> {
+  let release!: () => void;
+  const mine = new Promise<void>((r) => (release = r));
+  const prev = requestQueue;
+  requestQueue = prev.then(() => mine);
+  return prev.then(() => {
+    active++;
+    let done = false;
+    return () => {
+      if (done) return;
+      done = true;
+      active--;
+      release();
+    };
+  });
 }
 
 /** Serializa las operaciones de sincronización dentro de la instancia. */
@@ -92,7 +108,7 @@ export async function syncBefore(write: boolean, seen?: string | null) {
   if (!BLOB_MODE) return;
   if (seen && seen !== etag && !dirty) {
     await exclusive(async () => {
-      if (!dirty && active === 0 && seen !== etag) await pull();
+      if (!dirty && seen !== etag) await pull();
       loaded = true;
     });
     if (!write) return;
@@ -102,7 +118,6 @@ export async function syncBefore(write: boolean, seen?: string | null) {
   if (write && dirty) await flush();
   await exclusive(async () => {
     if (dirty) return; // lectura con cambios locales sin subir: la copia local es la más nueva
-    if (loaded && active > 0) return; // otro pedido está usando la base en esta instancia
     if (loaded && !write && Date.now() - lastCheck < CHECK_EVERY_MS) return;
     await pull();
     loaded = true;
@@ -130,35 +145,71 @@ export function markDirty() {
   }
 }
 
-export function flush(): Promise<void> {
+/**
+ * Sube la base. Si otra instancia guardó en el medio y se tiene el changeset del pedido,
+ * se trae la versión remota y se le aplican encima estos cambios (fusión por fila).
+ */
+export function flush(changeset?: Uint8Array | null): Promise<void> {
   if (!BLOB_MODE) return Promise.resolve();
   return exclusive(async () => {
     if (!dirty) return;
     dirty = false;
     const { put, get, BlobPreconditionFailedError } = await blob();
-    try {
-      getDb().exec("PRAGMA wal_checkpoint(TRUNCATE)");
-    } catch {
-      /* sin WAL */
-    }
-    const buf = fs.readFileSync(dbPath());
     const opts = { access: "private" as const, allowOverwrite: true, addRandomSuffix: false, contentType: "application/octet-stream" };
-    try {
-      const r = await put(DB_KEY, buf, { ...opts, ...(etag ? { ifMatch: etag } : {}) });
-      etag = r.etag;
-    } catch (e) {
-      if (!(e instanceof BlobPreconditionFailedError)) {
-        dirty = true;
-        throw e;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        getDb().exec("PRAGMA wal_checkpoint(TRUNCATE)");
+      } catch {
+        /* sin WAL */
       }
-      // Otra instancia guardó en el medio. Se guarda una copia de la versión remota y gana la más reciente (esta).
-      console.warn("[forja] conflicto de escritura: se respalda la versión remota");
-      const remote = await get(DB_KEY, { access: "private", useCache: false });
-      if (remote?.statusCode === 200) await put(`${PREFIX}db/conflictos/${Date.now()}.db`, await readStream(remote.stream), opts);
-      const r = await put(DB_KEY, buf, opts);
-      etag = r.etag;
+      const buf = fs.readFileSync(dbPath());
+      try {
+        const r = await put(DB_KEY, buf, { ...opts, ...(etag ? { ifMatch: etag } : {}) });
+        etag = r.etag;
+        return;
+      } catch (e) {
+        if (!(e instanceof BlobPreconditionFailedError)) {
+          dirty = true;
+          throw e;
+        }
+        if (changeset && changeset.length) {
+          // Fusión: base remota + cambios de este pedido.
+          console.warn(`[forja] otra instancia guardó en el medio: fusionando cambios (intento ${attempt + 1})`);
+          await pull(true);
+          const omitted = mergeChangeset(changeset);
+          if (omitted) {
+            // Algunas filas chocaron con cambios de otra instancia: se respalda la versión propia.
+            await put(`${PREFIX}db/conflictos/${Date.now()}-omitidas.db`, buf, opts).catch(() => {});
+          }
+          continue;
+        }
+        // Sin changeset: se respalda la versión remota y se guarda esta.
+        console.warn("[forja] conflicto de escritura sin changeset: se respalda la versión remota");
+        const remote = await get(DB_KEY, { access: "private", useCache: false });
+        if (remote?.statusCode === 200) await put(`${PREFIX}db/conflictos/${Date.now()}.db`, await readStream(remote.stream), opts);
+        const r = await put(DB_KEY, buf, opts);
+        etag = r.etag;
+        return;
+      }
     }
+    dirty = true;
+    throw new Error("No se pudo guardar después de varios intentos");
   });
+}
+
+/** Aplica un changeset sobre la base local. Devuelve cuántos cambios se omitieron por conflicto. */
+function mergeChangeset(changeset: Uint8Array): number {
+  const { constants } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
+  let omitted = 0;
+  getDb().applyChangeset(changeset, {
+    onConflict: (type: number) => {
+      // DATA: la fila cambió en las dos: gana este pedido (el más reciente).
+      if (type === constants.SQLITE_CHANGESET_DATA) return constants.SQLITE_CHANGESET_REPLACE;
+      omitted++;
+      return constants.SQLITE_CHANGESET_OMIT;
+    },
+  });
+  return omitted;
 }
 
 function keyFor(localPath: string): string {

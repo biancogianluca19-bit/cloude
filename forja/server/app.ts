@@ -21,7 +21,7 @@ import { gradePhoto, savePhoto, photoPathFromToken } from "./ai/photo.ts";
 import { aiAvailable, model, testConnection, DEFAULT_MODEL } from "./ai/llm.ts";
 import { invalidateIndex, search } from "./retrieval/search.ts";
 import { requireAuth, login, logout, authRequired, isAuthed } from "./auth.ts";
-import { BLOB_MODE, syncBefore, markDirty, flush, currentVersion, enterRequest, leaveRequest, persistFile, removeFile, ensureLocalFile, takeIncoming, INCOMING_PREFIX, storageInfo, cleanupOrphans } from "./storage.ts";
+import { BLOB_MODE, syncBefore, markDirty, flush, currentVersion, acquireRequestSlot, persistFile, removeFile, ensureLocalFile, takeIncoming, INCOMING_PREFIX, storageInfo, cleanupOrphans } from "./storage.ts";
 import { getDb } from "./db.ts";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 60 * 1024 * 1024, files: 30 } });
@@ -103,18 +103,21 @@ export function createApp() {
   // si el pedido la cambió, se guarda ANTES de responder y la respuesta lleva la versión nueva.
   app.use("/api", async (req, res, next) => {
     if (!BLOB_MODE) return next();
+    const release = await acquireRequestSlot();
+    res.on("close", release);
     try {
       const write = req.method !== "GET";
       await syncBefore(write, (req.headers["x-forja-version"] as string) || null);
+      const db = getDb();
       const changes = () => Number((getDb().prepare("SELECT total_changes() n").get() as any).n);
       const before = changes();
-      enterRequest();
-      let left = false;
-      const leave = () => {
-        if (!left) leaveRequest();
-        left = true;
-      };
-      res.on("close", leave);
+      // Registro de cambios de este pedido, para fusionarlos si otra instancia guardó en el medio.
+      let session: any = null;
+      try {
+        session = (db as any).createSession();
+      } catch {
+        session = null;
+      }
       const end = res.end.bind(res) as (...a: any[]) => any;
       let patched = false;
       (res as any).end = (...args: any[]) => {
@@ -126,25 +129,33 @@ export function createApp() {
         } catch {
           changed = true;
         }
+        let cs: Uint8Array | null = null;
+        try {
+          if (changed && session) cs = session.changeset();
+          session?.close();
+        } catch {
+          cs = null;
+        }
         const finish = () => {
           const v = currentVersion();
           if (v && !res.headersSent) res.setHeader("x-forja-version", v);
-          leave();
+          release();
           return end(...args);
         };
         if (!changed) return finish();
-        if (res.headersSent) {
-          markDirty();
-          return finish();
-        }
         markDirty();
-        flush()
+        if (res.headersSent) {
+          release();
+          return end(...args);
+        }
+        flush(cs)
           .catch((e) => console.error("[forja] no se pudo guardar:", e?.message ?? e))
           .finally(finish);
         return res;
       };
       next();
     } catch (e) {
+      release();
       next(e);
     }
   });

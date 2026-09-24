@@ -88,6 +88,31 @@ describe("sincronización con Blob", () => {
     expect(db.get<any>("SELECT name FROM subjects WHERE name = 'Local'")).toBeTruthy();
   });
 
+  it("si otra instancia guardó en el medio, fusiona los cambios de las dos", async () => {
+    const key = [...store.keys()].find((k) => k.endsWith("db/forja.db"))!;
+    await storage.syncBefore(true);
+    // Esta instancia: registra su cambio.
+    const session = (db.getDb() as any).createSession();
+    db.run("INSERT INTO subjects(name) VALUES ('Mía')");
+    const cs = session.changeset();
+    session.close();
+    // Otra instancia: parte de la misma versión y guarda un cambio distinto.
+    const { DatabaseSync } = await import("node:sqlite");
+    const tmp = path.join(DATA, "otra.db");
+    fs.writeFileSync(tmp, store.get(key)!.buf);
+    const other = new DatabaseSync(tmp);
+    other.exec("INSERT INTO settings(key, value) VALUES ('de_la_otra', 'sí')");
+    other.close();
+    store.set(key, { buf: fs.readFileSync(tmp), etag: "de-otra-instancia" });
+    storage.markDirty();
+    await storage.flush(cs);
+    db.closeDb();
+    fs.rmSync(db.dbPath(), { force: true });
+    await storage.syncBefore(true);
+    expect(db.get<any>("SELECT name FROM subjects WHERE name = 'Mía'")).toBeTruthy();
+    expect(db.get<any>("SELECT value FROM settings WHERE key = 'de_la_otra'")?.value).toBe("sí");
+  });
+
   it("los archivos subidos se guardan y se recuperan si faltan en la instancia", async () => {
     const p = path.join(db.UPLOAD_DIR, "9", "archivo.txt");
     fs.mkdirSync(path.dirname(p), { recursive: true });
