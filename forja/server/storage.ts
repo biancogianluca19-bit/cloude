@@ -215,8 +215,9 @@ export function storageInfo() {
  * Borra del store los archivos que ya no usa nadie: material o fotos sin fila en la base,
  * subidas directas abandonadas (más de un día) y respaldos de conflictos de más de 14 días.
  */
-export async function cleanupOrphans(referenced: Set<string>): Promise<{ deleted: number; kept: number }> {
-  if (!BLOB_MODE) return { deleted: 0, kept: 0 };
+export async function cleanupOrphans(referenced: Set<string>): Promise<{ deleted: number; kept: number; byKind: Record<string, number> }> {
+  if (!BLOB_MODE) return { deleted: 0, kept: 0, byKind: {} };
+  const byKind: Record<string, number> = {};
   const { list, del } = await blob();
   const refKeys = new Set([...referenced].map((p) => keyFor(p)));
   const now = Date.now();
@@ -231,10 +232,14 @@ export async function cleanupOrphans(referenced: Set<string>): Promise<{ deleted
       const isIncoming = b.pathname.startsWith(INCOMING_PREFIX);
       const isConflict = b.pathname.startsWith(PREFIX + "db/conflictos/");
       if ((isData && !refKeys.has(b.pathname)) || (isIncoming && age > 86400_000) || (isConflict && age > 14 * 86400_000)) toDelete.push(b.url);
-      else kept++;
+      else {
+        kept++;
+        const kind = isData ? "datos" : isIncoming ? "entrantes" : isConflict ? "conflictos" : b.pathname.endsWith("forja.db") ? "base" : "otros";
+        byKind[kind] = (byKind[kind] ?? 0) + 1;
+      }
     }
     cursor = r.hasMore ? r.cursor : undefined;
   } while (cursor);
   for (let i = 0; i < toDelete.length; i += 100) await del(toDelete.slice(i, i + 100));
-  return { deleted: toDelete.length, kept };
+  return { deleted: toDelete.length, kept, byKind };
 }
