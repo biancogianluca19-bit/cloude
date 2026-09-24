@@ -111,7 +111,7 @@ try {
   await page.getByRole("button", { name: "¿Cómo resuelve este profesor el ejercicio 1.7?" }).click();
   await page.getByText("Modo demo").first().waitFor({ timeout: 20_000 });
   await page.getByLabel("Pregunta al tutor").fill("Dame otro ejercicio parecido de punto de equilibrio");
-  await page.keyboard.press("Enter");
+  await page.getByRole("button", { name: "Enviar" }).click();
   await page.getByRole("link", { name: "Resolver el ejercicio" }).waitFor();
   await shot(page, "06-tutor");
 

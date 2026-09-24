@@ -210,3 +210,31 @@ const INSTANCE = Math.random().toString(36).slice(2, 8);
 export function storageInfo() {
   return { mode: BLOB_MODE ? "blob" : "local", instance: INSTANCE, dirty, active, etag: etag ? etag.slice(-8) : null, lastCheck };
 }
+
+/**
+ * Borra del store los archivos que ya no usa nadie: material o fotos sin fila en la base,
+ * subidas directas abandonadas (más de un día) y respaldos de conflictos de más de 14 días.
+ */
+export async function cleanupOrphans(referenced: Set<string>): Promise<{ deleted: number; kept: number }> {
+  if (!BLOB_MODE) return { deleted: 0, kept: 0 };
+  const { list, del } = await blob();
+  const refKeys = new Set([...referenced].map((p) => keyFor(p)));
+  const now = Date.now();
+  const toDelete: string[] = [];
+  let kept = 0;
+  let cursor: string | undefined;
+  do {
+    const r = await list({ prefix: PREFIX, cursor, limit: 1000 });
+    for (const b of r.blobs) {
+      const age = now - new Date(b.uploadedAt).getTime();
+      const isData = b.pathname.startsWith(PREFIX + "data/");
+      const isIncoming = b.pathname.startsWith(INCOMING_PREFIX);
+      const isConflict = b.pathname.startsWith(PREFIX + "db/conflictos/");
+      if ((isData && !refKeys.has(b.pathname)) || (isIncoming && age > 86400_000) || (isConflict && age > 14 * 86400_000)) toDelete.push(b.url);
+      else kept++;
+    }
+    cursor = r.hasMore ? r.cursor : undefined;
+  } while (cursor);
+  for (let i = 0; i < toDelete.length; i += 100) await del(toDelete.slice(i, i + 100));
+  return { deleted: toDelete.length, kept };
+}

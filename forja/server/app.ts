@@ -21,7 +21,7 @@ import { gradePhoto, savePhoto, photoPathFromToken } from "./ai/photo.ts";
 import { aiAvailable, model, testConnection, DEFAULT_MODEL } from "./ai/llm.ts";
 import { invalidateIndex, search } from "./retrieval/search.ts";
 import { requireAuth, login, logout, authRequired, isAuthed } from "./auth.ts";
-import { BLOB_MODE, syncBefore, markDirty, flush, currentVersion, enterRequest, leaveRequest, persistFile, ensureLocalFile, takeIncoming, INCOMING_PREFIX, storageInfo } from "./storage.ts";
+import { BLOB_MODE, syncBefore, markDirty, flush, currentVersion, enterRequest, leaveRequest, persistFile, removeFile, ensureLocalFile, takeIncoming, INCOMING_PREFIX, storageInfo, cleanupOrphans } from "./storage.ts";
 import { getDb } from "./db.ts";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 60 * 1024 * 1024, files: 30 } });
@@ -152,6 +152,16 @@ export function createApp() {
   // ------------------------------------------------------------ Estado y ajustes
   app.get("/api/status", h(() => ({ ai: aiAvailable(), model: model(), demo: !aiAvailable(), keySource: process.env.ANTHROPIC_API_KEY ? "entorno" : getSetting("anthropic_api_key") ? "ajustes" : null, storage: storageInfo().mode, auth: authRequired() })));
   app.get("/api/status/storage", h(() => storageInfo()));
+  app.post(
+    "/api/maintenance/cleanup",
+    h(async () => {
+      const refs = new Set<string>([
+        ...all<{ path: string }>("SELECT path FROM files").map((r) => r.path),
+        ...all<{ photo_path: string }>("SELECT photo_path FROM attempts WHERE photo_path IS NOT NULL").map((r) => r.photo_path),
+      ]);
+      return cleanupOrphans(refs);
+    }),
+  );
   app.put(
     "/api/settings",
     h((req) => {
@@ -200,11 +210,15 @@ export function createApp() {
   );
   app.delete(
     "/api/subjects/:id",
-    h((req) => {
+    h(async (req) => {
       const sid = id(req);
       const files = all<{ path: string }>("SELECT path FROM files WHERE subject_id = ?", [sid]);
+      const photos = all<{ photo_path: string }>("SELECT photo_path FROM attempts WHERE subject_id = ? AND photo_path IS NOT NULL", [sid]);
       run("DELETE FROM subjects WHERE id = ?", [sid]);
-      for (const f of files) fs.rmSync(f.path, { force: true });
+      for (const p of [...files.map((f) => f.path), ...photos.map((p) => p.photo_path)]) {
+        fs.rmSync(p, { force: true });
+        await removeFile(p);
+      }
       invalidateIndex(sid);
       return { ok: true };
     }),
