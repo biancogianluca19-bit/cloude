@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Libreta de Plata</title>
+<meta name="description" content="Tus ingresos y gastos diarios, cargados por WhatsApp o dictados acá, con presupuesto mensual por categoría.">
+<meta name="theme-color" content="#EDF0EE">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="estilos.css">
+<style>html,body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <h1>Libreta de Plata</h1>
+      <span class="estado" id="estado" data-modo="cargando"><i></i><span id="estado-txt">Conectando…</span></span>
+    </div>
+    <nav class="mesnav" aria-label="Cambiar de mes">
+      <button type="button" id="mes-ant" aria-label="Mes anterior">‹</button>
+      <span class="mes" id="mes-txt"></span>
+      <button type="button" id="mes-sig" aria-label="Mes siguiente">›</button>
+    </nav>
+  </header>
+
+  <section class="card" id="login" hidden aria-labelledby="login-h">
+    <h2 id="login-h">Entrá a tu libreta</h2>
+    <p class="hint">Escribí la clave que pusiste en Vercel como <span class="num">CLAVE_WEB</span>. Queda guardada en este navegador.</p>
+    <form id="login-form" class="fila">
+      <input type="password" id="clave" autocomplete="current-password" placeholder="Clave" class="campo" required>
+      <button type="submit" class="btn primario">Entrar</button>
+    </form>
+    <p class="aviso warn" id="login-error" hidden></p>
+  </section>
+
+  <div id="contenido" hidden>
+  <section class="card dictado" aria-labelledby="dictado-h">
+    <div class="sec-h">
+      <h2 id="dictado-h">¿Qué pasó con tu plata hoy?</h2>
+      <span class="label" id="hoy-gastado"></span>
+    </div>
+    <label for="texto" class="label" style="display:block;margin-bottom:6px">Dictá o escribí tus movimientos</label>
+    <textarea id="texto" placeholder="Ej.: Gasté 4.500 en el súper, 12 mil de nafta y un café de 2800. Me pagaron 150 lucas de un trabajo freelance."></textarea>
+    <p class="hint" id="hint-voz">También podés mandarle un audio al bot de WhatsApp. Acá, para dictar, usá el micrófono del teclado.</p>
+    <div class="fila fin">
+      <div class="fila">
+        <button type="button" class="btn mic" id="btn-mic" hidden data-on="0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+          <span id="mic-txt">Dictar</span>
+        </button>
+        <label class="fecha-base" for="fecha-base">Fecha
+          <input type="date" id="fecha-base">
+        </label>
+      </div>
+      <div class="fila">
+        <button type="button" class="btn" id="btn-limpiar">Borrar texto</button>
+        <button type="button" class="btn primario" id="btn-procesar">Ordenar movimientos</button>
+      </div>
+    </div>
+    <div id="proceso" class="borrador" aria-live="polite"></div>
+  </section>
+
+  <section class="card" aria-labelledby="resumen-h">
+    <div class="sec-h">
+      <h2 id="resumen-h">Resumen del mes</h2>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><span class="label">Ingresos</span><span class="v num" id="k-ing"></span><span class="sub" id="k-ing-n"></span></div>
+      <div class="kpi"><span class="label">Gastos</span><span class="v num" id="k-gas"></span><span class="sub" id="k-gas-n"></span></div>
+      <div class="kpi saldo"><span class="label">Saldo</span><span class="v num" id="k-sal"></span><span class="sub" id="k-sal-sub"></span></div>
+    </div>
+    <div class="usd" id="k-usd" hidden></div>
+    <div class="alertas" id="alertas"></div>
+    <div class="chart-wrap" id="chart-wrap">
+      <div class="label" style="margin-bottom:6px">Gastos por día (pesos)</div>
+      <svg id="chart" role="img" aria-label="Gastos por día del mes"></svg>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="pres-h">
+    <div class="sec-h">
+      <h2 id="pres-h">Presupuesto por categoría</h2>
+      <button type="button" class="btn chico" id="btn-topes">Editar topes</button>
+    </div>
+    <p class="pres-total" id="pres-total"></p>
+    <div class="cats" id="pres"></div>
+    <form id="topes-form" class="topes" hidden></form>
+  </section>
+
+  <section class="card" aria-labelledby="movs-h">
+    <div class="sec-h">
+      <h2 id="movs-h">Movimientos</h2>
+      <span class="label" id="movs-n"></span>
+    </div>
+    <div id="movs"></div>
+  </section>
+
+  <section class="card" aria-labelledby="cats-h">
+    <div class="sec-h">
+      <h2 id="cats-h">Ingresos por categoría</h2>
+    </div>
+    <div class="cats" id="cats"></div>
+  </section>
+
+  <section class="card">
+    <details class="ajustes" id="ajustes">
+      <summary>Ajustes y exportar</summary>
+      <div class="cuerpo">
+        <div id="aprendidas-txt"></div>
+        <div class="fila">
+          <button type="button" class="btn chico" id="btn-olvidar">Olvidar palabras aprendidas</button>
+          <button type="button" class="btn chico" id="btn-csv">Exportar mes a CSV</button>
+          <button type="button" class="btn chico" id="btn-salir">Cerrar sesión en este navegador</button>
+        </div>
+        <div class="aviso">Por WhatsApp podés escribir <b>resumen</b>, <b>presupuesto</b>, <b>presupuesto súper 200 mil</b> o <b>deshacer</b>. Lo que anotes ahí aparece acá al volver a la página.</div>
+      </div>
+    </details>
+  </section>
+  </div>
+</div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script src="lector.js"></script>
+<script src="presupuesto.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

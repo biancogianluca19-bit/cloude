@@ -1,0 +1,9 @@
+{
+  "name": "libreta-de-plata",
+  "private": true,
+  "description": "Ingresos y gastos diarios por WhatsApp y web, con presupuesto por categoría.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}

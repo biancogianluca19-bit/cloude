@@ -1,0 +1,9 @@
+{
+  "name": "Libreta de Plata",
+  "short_name": "Libreta",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#EDF0EE",
+  "theme_color": "#EDF0EE",
+  "lang": "es-AR"
+}

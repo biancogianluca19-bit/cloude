@@ -1,0 +1,7 @@
+{
+  "framework": null,
+  "outputDirectory": "public",
+  "functions": {
+    "api/whatsapp.js": { "maxDuration": 30 }
+  }
+}

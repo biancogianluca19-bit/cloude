@@ -1,12 +1,7 @@
 // Pruebas del lector local de movimientos. Correr con: node --test tests/
 const test = require('node:test');
 const assert = require('node:assert');
-const fs = require('node:fs');
-const path = require('node:path');
-
-const html = fs.readFileSync(path.join(__dirname, '..', 'app.html'), 'utf8');
-const bloque = html.split('// PARSER-START')[1].split('// PARSER-END')[0];
-const Lector = new Function(bloque + '\nreturn Lector;')();
+const Lector = require('../public/lector.js');
 
 const HOY = '2026-09-23'; // miércoles
 const leer = (t, o = {}) => Lector.leer(t, { hoy: HOY, fecha: HOY, ...o });
