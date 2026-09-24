@@ -305,3 +305,22 @@ export async function cleanupOrphans(referenced: Set<string>): Promise<{ deleted
   for (let i = 0; i < toDelete.length; i += 100) await del(toDelete.slice(i, i + 100));
   return { deleted: toDelete.length, kept, byKind, recentConflicts: conflicts.sort().slice(-25) };
 }
+
+/** Diagnóstico: compara los etags que devuelven put, head y get para el mismo objeto. */
+export async function etagProbe() {
+  if (!BLOB_MODE) return null;
+  const { put, head, get, del } = await blob();
+  const key = PREFIX + "diagnostico/etag.txt";
+  const p = await put(key, "x" + Date.now(), { access: "private", allowOverwrite: true, addRandomSuffix: false });
+  const h = await head(key);
+  const g = await get(key, { access: "private", useCache: false });
+  let conditional = "sin probar";
+  try {
+    await put(key, "y", { access: "private", allowOverwrite: true, addRandomSuffix: false, ifMatch: g?.blob.etag });
+    conditional = "ok con etag de get";
+  } catch (e: any) {
+    conditional = "falla con etag de get: " + e?.name;
+  }
+  await del(key).catch(() => {});
+  return { put: p.etag, head: (h as any).etag, get: g?.blob.etag, conditional };
+}
