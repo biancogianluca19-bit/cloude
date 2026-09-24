@@ -62,6 +62,15 @@ describe("contraseña", () => {
     await request(app).get("/api/subjects").set("Cookie", cookie).expect(200);
     await request(app).get("/api/subjects").set("Cookie", cookie.replace(/.$/, "x")).expect(401);
   });
+  it("FORJA_AUTH=off desactiva la contraseña", async () => {
+    process.env.FORJA_AUTH = "off";
+    try {
+      await request(app).get("/api/subjects").expect(200);
+      expect((await request(app).get("/api/auth")).body.required).toBe(false);
+    } finally {
+      delete process.env.FORJA_AUTH;
+    }
+  });
   it("pedir un token de subida directa exige sesión", async () => {
     await request(app).post("/api/blob/upload").send({ type: "blob.generate-client-token", payload: {} }).expect(401);
   });

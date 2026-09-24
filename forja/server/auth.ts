@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import type { Request, Response, NextFunction } from "express";
 
 // Acceso con contraseña para cuando FORJA está publicada en internet.
-// Sin FORJA_PASSWORD (uso local) no se pide nada.
+// Sin FORJA_PASSWORD (uso local) no se pide nada. FORJA_AUTH=off la desactiva sin borrarla.
 
 const COOKIE = "forja_sesion";
 const DAYS = 60;
@@ -12,7 +12,7 @@ function password() {
 }
 
 export function authRequired() {
-  return !!password();
+  return process.env.FORJA_AUTH !== "off" && !!password();
 }
 
 function secret() {
