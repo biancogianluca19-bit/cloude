@@ -266,19 +266,6 @@ b, strong { font-weight: 500; }
 .head__note { font-size: 15px; color: var(--muted); max-width: 44em; padding-left: 18px; border-left: 1px solid var(--gold-line); }
 
 /* ---------- Proyectos ---------- */
-.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: clamp(40px, 5vw, 64px); }
-.filters button {
-  display: inline-flex; align-items: center; gap: 10px;
-  padding: 10px 18px; border-radius: 999px; cursor: pointer;
-  background: none; border: 1px solid var(--line); color: var(--muted);
-  font: 400 14.5px/1 var(--sans); letter-spacing: .01em;
-  transition: border-color .3s, background-color .3s, color .3s;
-}
-.filters button span { font: italic 400 15px/1 var(--serif); color: var(--gold); font-variant-numeric: tabular-nums; }
-.filters button:hover { border-color: var(--ink); color: var(--ink); }
-.filters button[aria-pressed="true"] { background: var(--btn-bg); border-color: var(--btn-bg); color: var(--btn-fg); }
-.filters button[aria-pressed="true"] span { color: var(--gold-soft); }
-
 .works { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(32px, 5vw, 80px); row-gap: clamp(72px, 8vw, 112px); align-items: start; }
 .work { display: flex; flex-direction: column; gap: clamp(32px, 3.5vw, 44px); }
 .work[hidden] { display: none; }
@@ -304,6 +291,7 @@ b, strong { font-weight: 500; }
 .work__specs { list-style: none; margin: 2px 0 4px; padding: 12px 0 0; width: 100%; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 6px 22px; }
 .work__specs li { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 400; color: var(--muted); }
 .work__specs li::before { content: ""; width: 12px; height: 1px; background: var(--gold-line); flex: none; }
+.work--wide { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: clamp(32px, 5vw, 80px); align-items: center; }
 .work__note { font: italic 400 15px/1.45 var(--serif); color: var(--muted); }
 
 /* Etiqueta "Abrir" sobre los recortes */
@@ -327,8 +315,7 @@ b, strong { font-weight: 500; }
 .work__media { cursor: pointer; text-decoration: none; }
 
 /* ---------- Servicios ---------- */
-.services { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: clamp(32px, 4vw, 64px); }
-@media (max-width: 1080px) { .services { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.services { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(40px, 7vw, 120px); }
 .service { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding-block: 36px 44px; border-top: 1px solid var(--line); }
 .service h3 { font-size: clamp(24px, 2.1vw, 29px); line-height: 1.15; letter-spacing: -.01em; }
 .service p { color: var(--muted); max-width: 30em; }
@@ -437,6 +424,7 @@ b, strong { font-weight: 500; }
 }
 @media (max-width: 900px) {
   .works { grid-template-columns: 1fr; max-width: 640px; }
+  .work--wide { grid-template-columns: 1fr; row-gap: 32px; }
   .hero__grid { grid-template-columns: 1fr; }
   .hero__side { order: 2; }
   .about, .contact__inner { grid-template-columns: 1fr; }

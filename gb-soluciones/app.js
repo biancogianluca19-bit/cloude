@@ -136,36 +136,6 @@
     go(0);
   }
 
-  /* ---------- Filtros de proyectos ---------- */
-  var filterBtns = $$(".filters button");
-  var works = $$(".work");
-  filterBtns.forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var cat = btn.getAttribute("data-filter");
-      filterBtns.forEach(function (x) { x.setAttribute("aria-pressed", String(x === btn)); });
-      works.forEach(function (w) {
-        var show = cat === "todos" || w.getAttribute("data-cat") === cat;
-        var was = !w.hidden;
-        w.hidden = !show;
-        if (show) {
-          // Lo que aparece por el filtro se muestra entero, sin esperar al desplazamiento
-          $$(".reveal", w).forEach(function (el) { el.classList.add("is-in"); });
-          if (!was && !reduce.matches) {
-            w.classList.remove("is-entering"); void w.offsetWidth; w.classList.add("is-entering");
-          }
-        }
-      });
-    });
-  });
-
-  // Un enlace a un proyecto oculto por el filtro vuelve a mostrar todos
-  $$('a[href^="#p-"]').forEach(function (a) {
-    a.addEventListener("click", function () {
-      var t = document.getElementById(a.getAttribute("href").slice(1));
-      if (t && t.hidden) filterBtns[0].click();
-    });
-  });
-
   /* ---------- Contacto ---------- */
   var EMAIL = "gbsoltech@gmail.com";
   var status = $("#brief-status");
