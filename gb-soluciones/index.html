@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GB Soluciones Tecnológicas</title>
+<meta name="description" content="Páginas web, menús digitales y experiencias interactivas para comercios y profesionales. Desde Canning, para Zona Sur y a distancia.">
+<meta name="theme-color" content="#071330">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23071330'/%3E%3Cpath d='M12 12h40v28L40 52H12z' fill='%23FFC72C'/%3E%3Ctext x='31' y='41' font-family='Arial,sans-serif' font-weight='800' font-size='22' text-anchor='middle' fill='%23071330'%3EGB%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400;500&family=Onest:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!-- CONTENIDO -->
+<a class="skip" href="#proyectos">Saltar a los proyectos</a>
+<div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+
+<header class="nav" id="nav">
+  <div class="nav__inner wrap">
+    <a class="brand" href="#inicio" aria-label="GB Soluciones Tecnológicas, volver al inicio">
+      <span class="brand__mark" aria-hidden="true">GB</span>
+      <span class="brand__name">Soluciones<br>Tecnológicas</span>
+    </a>
+    <nav class="nav__links" id="nav-links" aria-label="Secciones">
+      <a href="#proyectos">Proyectos</a>
+      <a href="#servicios">Servicios</a>
+      <a href="#proceso">Cómo trabajamos</a>
+      <a href="#sobre">Sobre GB</a>
+      <a href="#contacto" class="nav__cta">Consultar</a>
+    </nav>
+    <button class="nav__toggle" id="nav-toggle" aria-expanded="false" aria-controls="nav-links" aria-label="Abrir menú">
+      <span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main>
+<!-- INICIO -->
+<section class="hero" id="inicio">
+  <canvas class="hero__field" id="hero-field" aria-hidden="true"></canvas>
+  <div class="hero__inner wrap">
+    <div class="hero__copy">
+      <p class="eyebrow eyebrow--light"><span class="dot" aria-hidden="true"></span>GB Soluciones Tecnológicas · Canning, Buenos Aires</p>
+      <h1 class="hero__title">
+        <span class="line"><span>Diseño y tecnología</span></span>
+        <span class="line"><span>para que tu negocio</span></span>
+        <span class="line"><span><mark>se vea y funcione</mark></span></span>
+        <span class="line"><span>mejor.</span></span>
+      </h1>
+      <p class="hero__lead">Páginas web, menús digitales y experiencias interactivas para comercios y profesionales. Abajo tenés cuatro proyectos para probar.</p>
+      <div class="hero__actions">
+        <a class="btn btn--sun" href="#proyectos">Ver proyectos <span class="arr" aria-hidden="true">↓</span></a>
+        <a class="btn btn--ghost" href="#contacto">Consultar</a>
+      </div>
+    </div>
+
+    <div class="showcase" id="showcase" aria-roledescription="carrusel" aria-label="Vista previa de los proyectos">
+      <div class="showcase__stage">
+        <div class="browser">
+          <div class="browser__bar" aria-hidden="true"><i></i><i></i><i></i><span class="browser__url" id="showcase-url">la-pasion-de-rosas-demo</span></div>
+          <div class="browser__screen">
+            <img class="is-active" src="img/rosas-desk.jpg" alt="Portada de la demo de La Pasión de Rosas en computadora" width="1440" height="900" fetchpriority="high">
+            <img src="img/gus-desk.jpg" alt="Menú digital de Lo de Gus en computadora" width="1440" height="900" loading="lazy">
+            <img src="img/cv-desk.jpg" alt="CV virtual de Gianluca Bianco en computadora" width="1440" height="900" loading="lazy">
+            <img src="img/recorrido-desk.jpg" alt="Recorrido 3D de la UF 208 de Gazda Rossi en computadora" width="1440" height="900" loading="lazy">
+          </div>
+        </div>
+        <div class="phone" aria-hidden="true">
+          <div class="phone__screen">
+            <img class="is-active" src="img/rosas-mob.jpg" alt="" width="780" height="1688">
+            <img src="img/gus-mob.jpg" alt="" width="780" height="1688" loading="lazy">
+            <img src="img/cv-mob.jpg" alt="" width="780" height="1688" loading="lazy">
+            <img src="img/recorrido-mob.jpg" alt="" width="780" height="1688" loading="lazy">
+          </div>
+        </div>
+      </div>
+      <div class="showcase__tabs" role="tablist" aria-label="Elegir proyecto">
+        <button role="tab" aria-selected="true" data-i="0" data-url="la-pasion-de-rosas-demo"><span class="bar"><span></span></span>La Pasión de Rosas</button>
+        <button role="tab" aria-selected="false" data-i="1" data-url="menu-lodegus-demo"><span class="bar"><span></span></span>Lo de Gus</button>
+        <button role="tab" aria-selected="false" data-i="2" data-url="gianluca-bianco-cv"><span class="bar"><span></span></span>CV virtual</button>
+        <button role="tab" aria-selected="false" data-i="3" data-url="gazda-rossi-uf208-recorrido"><span class="bar"><span></span></span>Recorrido 3D</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker__track">
+      <span>Páginas web</span><span>Menús digitales</span><span>Catálogos</span><span>Experiencias 3D</span><span>Automatizaciones</span>
+      <span>Páginas web</span><span>Menús digitales</span><span>Catálogos</span><span>Experiencias 3D</span><span>Automatizaciones</span>
+    </div>
+  </div>
+</section>
+
+<!-- PROYECTOS -->
+<section class="section" id="proyectos">
+  <div class="wrap">
+    <div class="section__head">
+      <div>
+        <p class="eyebrow">Proyectos</p>
+        <h2 class="section__title reveal">Cuatro sitios que podés abrir y usar.</h2>
+      </div>
+      <div class="viewtoggle reveal" role="group" aria-label="Ver las capturas en">
+        <span class="viewtoggle__label">Ver en</span>
+        <button type="button" data-view="desk" aria-pressed="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg>Computadora
+        </button>
+        <button type="button" data-view="mob" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg>Celular
+        </button>
+      </div>
+    </div>
+
+    <p class="note reveal">La Pasión de Rosas y Lo de Gus son demos de diseño: propuestas que hicimos con información pública de cada negocio para mostrar cómo podría verse su web. No son trabajos encargados por esos comercios.</p>
+
+    <div class="projects" id="projects" data-view="desk">
+      <article class="card reveal" id="p-rosas">
+        <a class="card__media" href="https://la-pasion-de-rosas-demo.biancogianluca19.chatgpt.site" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
+          <div class="card__browser"><img src="img/rosas-desk.jpg" alt="" width="1440" height="900" loading="lazy"></div>
+          <div class="card__phone"><img src="img/rosas-mob.jpg" alt="" width="780" height="1688" loading="lazy"></div>
+        </a>
+        <div class="card__body">
+          <p class="chip chip--demo">Demo de diseño</p>
+          <h3 class="card__title">La Pasión de Rosas</h3>
+          <p class="card__place">Casa de asado y vino · Ezeiza</p>
+          <p class="card__text">Propuesta de sitio para un restaurante de Ezeiza. Tiene fotos del salón, un menú por pasos que se despliega, reconocimientos, horarios y botones que llevan a sus canales oficiales de reserva.</p>
+          <ul class="specs"><li>Menú en 3 pasos</li><li>Horarios y ubicación</li><li>Reserva y WhatsApp</li></ul>
+          <a class="btn btn--card" href="https://la-pasion-de-rosas-demo.biancogianluca19.chatgpt.site" target="_blank" rel="noopener">Abrir la demo <span class="arr" aria-hidden="true">↗</span></a>
+        </div>
+      </article>
+
+      <article class="card reveal" id="p-gus">
+        <a class="card__media" href="https://menu-lodegus-demo.biancogianluca19.chatgpt.site" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
+          <div class="card__browser"><img src="img/gus-desk.jpg" alt="" width="1440" height="900" loading="lazy"></div>
+          <div class="card__phone"><img src="img/gus-mob.jpg" alt="" width="780" height="1688" loading="lazy"></div>
+        </a>
+        <div class="card__body">
+          <p class="chip chip--demo">Demo de diseño</p>
+          <h3 class="card__title">Lo de Gus</h3>
+          <p class="card__place">Café · Cocina · Amaneceres Office, Canning</p>
+          <p class="card__text">Menú digital para un café. Se busca por nombre, se filtra por categoría y se suman productos a un pedido que se manda armado por WhatsApp.</p>
+          <ul class="specs"><li>181 productos</li><li>Buscador y categorías</li><li>Pedido por WhatsApp</li></ul>
+          <a class="btn btn--card" href="https://menu-lodegus-demo.biancogianluca19.chatgpt.site" target="_blank" rel="noopener">Abrir el menú <span class="arr" aria-hidden="true">↗</span></a>
+        </div>
+      </article>
+
+      <article class="card reveal" id="p-cv">
+        <a class="card__media" href="https://gianluca-bianco-cv.biancogianluca19.chatgpt.site" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
+          <div class="card__browser"><img src="img/cv-desk.jpg" alt="" width="1440" height="900" loading="lazy"></div>
+          <div class="card__phone"><img src="img/cv-mob.jpg" alt="" width="780" height="1688" loading="lazy"></div>
+        </a>
+        <div class="card__body">
+          <p class="chip chip--own">Proyecto personal</p>
+          <h3 class="card__title">CV virtual de Gianluca</h3>
+          <p class="card__place">Perfil profesional · Gianluca Bianco</p>
+          <p class="card__text">Un currículum en formato web, en español y en inglés. Reúne experiencia, herramientas, formación y datos de contacto en una sola página.</p>
+          <ul class="specs"><li>Español / Inglés</li><li>4 secciones</li><li>Una sola página</li></ul>
+          <a class="btn btn--card" href="https://gianluca-bianco-cv.biancogianluca19.chatgpt.site" target="_blank" rel="noopener">Abrir el CV <span class="arr" aria-hidden="true">↗</span></a>
+        </div>
+      </article>
+
+      <article class="card reveal" id="p-3d">
+        <a class="card__media" href="https://gazda-rossi-uf208-recorrido.biancogianluca19.chatgpt.site" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
+          <div class="card__browser"><img src="img/recorrido-desk.jpg" alt="" width="1440" height="900" loading="lazy"></div>
+          <div class="card__phone"><img src="img/recorrido-mob.jpg" alt="" width="780" height="1688" loading="lazy"></div>
+        </a>
+        <div class="card__body">
+          <p class="chip chip--3d">Experiencia 3D · Gazda Rossi</p>
+          <h3 class="card__title">Recorrido UF 208</h3>
+          <p class="card__place">Departamento en dos plantas · Gazda Rossi Propiedades</p>
+          <p class="card__text">Un recorrido 3D para conocer el departamento antes de visitarlo. Se camina por cada ambiente, se ve como maqueta o en visita guiada, y un plano marca dónde estás. Es una reconstrucción orientativa con mobiliario propuesto.</p>
+          <ul class="specs"><li>2 plantas</li><li>5 ambientes</li><li>3 modos de vista</li></ul>
+          <a class="btn btn--card" href="https://gazda-rossi-uf208-recorrido.biancogianluca19.chatgpt.site" target="_blank" rel="noopener">Abrir el recorrido <span class="arr" aria-hidden="true">↗</span></a>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICIOS -->
+<section class="section section--alt" id="servicios">
+  <div class="wrap">
+    <div class="section__head">
+      <div>
+        <p class="eyebrow">Servicios</p>
+        <h2 class="section__title reveal">Qué podemos hacer para tu negocio.</h2>
+      </div>
+    </div>
+    <div class="services">
+      <article class="service reveal">
+        <svg class="service__icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="9" width="38" height="28" rx="3"/><path d="M5 16h38"/><circle cx="10" cy="12.5" r=".8"/><circle cx="13.5" cy="12.5" r=".8"/><path class="hl" d="M11 24h14M11 29h9"/><rect class="hl" x="30" y="22" width="8" height="10" rx="1"/><path d="M18 42h12M24 37v5"/></svg>
+        <h3>Páginas web para comercios y profesionales</h3>
+        <p>Un sitio que explique qué hacés, muestre tu trabajo y lleve a la gente a contactarte. Se diseña pensando primero en el celular.</p>
+        <a class="link" href="#p-rosas">Ejemplo: La Pasión de Rosas <span aria-hidden="true">→</span></a>
+      </article>
+      <article class="service reveal">
+        <svg class="service__icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="13" y="4" width="22" height="40" rx="4"/><path d="M21 8h6"/><rect class="hl" x="17" y="13" width="6" height="6" rx="1"/><path d="M26 14h5M26 18h3"/><rect class="hl" x="17" y="23" width="6" height="6" rx="1"/><path d="M26 24h5M26 28h3"/><path d="M17 36h14"/></svg>
+        <h3>Menús y catálogos digitales</h3>
+        <p>Tus productos online con fotos, precios, categorías y búsqueda. El cliente elige y te manda el pedido armado por WhatsApp.</p>
+        <a class="link" href="#p-gus">Ejemplo: Lo de Gus <span aria-hidden="true">→</span></a>
+      </article>
+      <article class="service reveal">
+        <svg class="service__icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 5 41 14v20L24 43 7 34V14z"/><path d="M7 14l17 9 17-9M24 23v20"/><path class="hl" d="M15 27.5v6M15 27.5l4 2"/></svg>
+        <h3>Experiencias web interactivas</h3>
+        <p>Recorridos 3D y presentaciones que la persona explora a su ritmo, desde el celular o la computadora. Sirven cuando una foto no alcanza para mostrar un espacio.</p>
+        <a class="link" href="#p-3d">Ejemplo: Recorrido UF 208 <span aria-hidden="true">→</span></a>
+      </article>
+      <article class="service reveal">
+        <svg class="service__icon" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="7"/><path d="M24 5v6M24 37v6M5 24h6M37 24h6M10.6 10.6l4.2 4.2M33.2 33.2l4.2 4.2M10.6 37.4l4.2-4.2M33.2 14.8l4.2-4.2"/><path class="hl" d="M21 24l2.2 2.2L27.5 22"/></svg>
+        <h3>Automatizaciones</h3>
+        <p>Si en tu negocio hay una tarea que se repite todos los días, vemos juntos si se puede automatizar antes de proponerte algo.</p>
+        <a class="link" href="#contacto">Contanos qué tarea es <span aria-hidden="true">→</span></a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESO -->
+<section class="section" id="proceso">
+  <div class="wrap">
+    <div class="section__head">
+      <div>
+        <p class="eyebrow">Cómo trabajamos</p>
+        <h2 class="section__title reveal">De la primera charla al sitio publicado.</h2>
+      </div>
+    </div>
+    <ol class="steps" id="steps">
+      <li class="step reveal">
+        <span class="step__n">01</span>
+        <h3>Entender</h3>
+        <p>Hablamos de tu negocio, de quién te compra y de qué tiene que lograr la web.</p>
+        <p class="step__you"><b>Vos:</b> contás cómo trabajás y qué querés mejorar.</p>
+      </li>
+      <li class="step reveal">
+        <span class="step__n">02</span>
+        <h3>Diseñar</h3>
+        <p>Armamos la estructura y el estilo visual con tus colores, fotos y textos.</p>
+        <p class="step__you"><b>Vos:</b> mirás la propuesta y marcás cambios.</p>
+      </li>
+      <li class="step reveal">
+        <span class="step__n">03</span>
+        <h3>Desarrollar</h3>
+        <p>Construimos el sitio para que ande bien en celular y en computadora.</p>
+        <p class="step__you"><b>Vos:</b> sumás la información que falte.</p>
+      </li>
+      <li class="step reveal">
+        <span class="step__n">04</span>
+        <h3>Revisar</h3>
+        <p>Probamos cada enlace, botón y pantalla, y ajustamos lo que haga falta.</p>
+        <p class="step__you"><b>Vos:</b> lo recorrés como si fueras un cliente.</p>
+      </li>
+      <li class="step reveal">
+        <span class="step__n">05</span>
+        <h3>Entregar</h3>
+        <p>Publicamos el sitio y te dejamos los accesos y las indicaciones para manejarlo.</p>
+        <p class="step__you"><b>Vos:</b> lo compartís con tus clientes.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- SOBRE GB -->
+<section class="section section--alt" id="sobre">
+  <div class="wrap about">
+    <div class="about__text">
+      <p class="eyebrow">Sobre GB</p>
+      <h2 class="section__title reveal">GB Soluciones Tecnológicas es la marca de Gianluca Bianco.</h2>
+      <p class="reveal">Gianluca diseña y construye páginas web y experiencias digitales para comercios y profesionales. Estudia Administración de Empresas y trabaja en el área administrativa y comercial de una inmobiliaria, así que conoce de cerca cómo funciona un negocio por dentro.</p>
+      <p class="reveal">Trabaja desde Canning. Atiende negocios de Zona Sur y, de forma remota, de cualquier otro lugar.</p>
+      <a class="link reveal" href="https://gianluca-bianco-cv.biancogianluca19.chatgpt.site" target="_blank" rel="noopener">Ver el CV de Gianluca <span aria-hidden="true">↗</span></a>
+    </div>
+    <div class="about__map reveal" aria-label="Zona de trabajo">
+      <svg viewBox="0 0 320 320" role="img" aria-labelledby="map-t">
+        <title id="map-t">Canning en el centro, Zona Sur alrededor y atención remota más allá</title>
+        <circle class="ring ring--3" cx="160" cy="160" r="150"/>
+        <circle class="ring ring--2" cx="160" cy="160" r="100"/>
+        <circle class="ring ring--1" cx="160" cy="160" r="50"/>
+        <circle class="pulse" cx="160" cy="160" r="12"/>
+        <circle class="core" cx="160" cy="160" r="7"/>
+        <text class="lbl lbl--core" x="160" y="190" text-anchor="middle">CANNING</text>
+        <text class="lbl" x="160" y="82" text-anchor="middle">ZONA SUR</text>
+        <text class="lbl" x="160" y="30" text-anchor="middle">REMOTO</text>
+      </svg>
+      <dl class="facts">
+        <div><dt>Base</dt><dd>Canning, Buenos Aires</dd></div>
+        <div><dt>Zona</dt><dd>Zona Sur y remoto</dd></div>
+        <div><dt>Correo</dt><dd>gbsoltech@gmail.com</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACTO -->
+<section class="contact" id="contacto">
+  <div class="wrap contact__inner">
+    <div class="contact__intro">
+      <p class="eyebrow eyebrow--light">Contacto</p>
+      <h2 class="contact__title">¿Querés una web para tu negocio?</h2>
+      <p>Escribinos contando qué hacés y qué necesitás. Te respondemos por correo.</p>
+      <div class="mail">
+        <span class="mail__addr" id="mail-addr">gbsoltech@gmail.com</span>
+        <button type="button" class="mail__copy" id="copy-mail">Copiar</button>
+      </div>
+      <a class="btn btn--sun" href="mailto:gbsoltech@gmail.com?subject=Consulta%20desde%20la%20web">Escribir un correo <span class="arr" aria-hidden="true">→</span></a>
+    </div>
+
+    <form class="brief" id="brief" novalidate>
+      <p class="brief__title">Armá tu consulta</p>
+      <div class="field">
+        <label for="f-nombre">Tu nombre</label>
+        <input id="f-nombre" name="nombre" autocomplete="name" placeholder="Ej.: Laura">
+      </div>
+      <div class="field">
+        <label for="f-negocio">Tu negocio o profesión</label>
+        <input id="f-negocio" name="negocio" placeholder="Ej.: panadería en Monte Grande">
+      </div>
+      <fieldset class="field">
+        <legend>Qué te interesa</legend>
+        <div class="opts">
+          <label><input type="checkbox" name="interes" value="Página web" id="f-i1"><span>Página web</span></label>
+          <label><input type="checkbox" name="interes" value="Menú o catálogo digital" id="f-i2"><span>Menú o catálogo</span></label>
+          <label><input type="checkbox" name="interes" value="Experiencia interactiva" id="f-i3"><span>Experiencia interactiva</span></label>
+          <label><input type="checkbox" name="interes" value="Automatización" id="f-i4"><span>Automatización</span></label>
+          <label><input type="checkbox" name="interes" value="Todavía no sé" id="f-i5"><span>Todavía no sé</span></label>
+        </div>
+      </fieldset>
+      <div class="field">
+        <label for="f-msg">Contanos un poco más</label>
+        <textarea id="f-msg" name="mensaje" rows="3" placeholder="Qué vendés, a quién, si ya tenés web o redes…"></textarea>
+      </div>
+      <div class="brief__actions">
+        <button type="submit" class="btn btn--sun">Abrir en mi correo</button>
+        <button type="button" class="btn btn--ghost" id="copy-brief">Copiar consulta</button>
+      </div>
+      <p class="brief__status" id="brief-status" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <span class="brand brand--small"><span class="brand__mark" aria-hidden="true">GB</span>GB Soluciones Tecnológicas</span>
+    <span>Canning, Buenos Aires · gbsoltech@gmail.com</span>
+    <span>© <span id="year">2026</span></span>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+<!-- /CONTENIDO -->
+</body>
+</html>
