@@ -102,18 +102,6 @@
   var plate = $("#plate");
   if (plate) {
     var imgs = $$(".plate__frame img", plate);
-    var names = [
-      "La Pasión de Rosas · demo de diseño",
-      "Lo de Gus · demo de diseño",
-      "CV virtual de Gianluca · proyecto personal",
-      "Recorrido UF 208 · experiencia 3D para Gazda Rossi"
-    ];
-    var plateLinks = [
-      ["https://la-pasion-de-rosas-demo.biancogianluca19.chatgpt.site", "Abrir la demo", "Abrir la demo de La Pasión de Rosas"],
-      ["https://menu-lodegus-demo.biancogianluca19.chatgpt.site", "Abrir el menú", "Abrir el menú de Lo de Gus"],
-      ["https://gianluca-bianco-cv.biancogianluca19.chatgpt.site", "Abrir el CV", "Abrir el CV virtual de Gianluca"],
-      ["https://gazda-rossi-uf208-recorrido.biancogianluca19.chatgpt.site", "Abrir el recorrido", "Abrir el recorrido 3D de la UF 208"]
-    ];
     var link = $("#plate-link"), pill = $("#plate-pill");
     var nEl = $("#plate-n"), nameEl = $("#plate-name"), fill = $(".plate__bar span", plate);
     var DUR = 6000, current = 0, timer = null, hovering = false;
@@ -121,12 +109,13 @@
 
     function go(i) {
       current = (i + imgs.length) % imgs.length;
+      var d = imgs[current].dataset;
       imgs.forEach(function (im, k) { im.classList.toggle("is-active", k === current); });
       nEl.textContent = current + 1;
-      nameEl.textContent = names[current];
-      link.href = plateLinks[current][0];
-      link.setAttribute("aria-label", plateLinks[current][2] + " (se abre en otra pestaña)");
-      pill.firstChild.nodeValue = plateLinks[current][1] + " ";
+      nameEl.textContent = d.name;
+      link.href = d.href;
+      link.setAttribute("aria-label", d.aria);
+      pill.firstChild.nodeValue = d.cta + " ";
       fill.style.animation = "none"; void fill.offsetWidth; fill.style.animation = "";
       schedule();
     }
@@ -146,6 +135,36 @@
     document.addEventListener("visibilitychange", schedule);
     go(0);
   }
+
+  /* ---------- Filtros de proyectos ---------- */
+  var filterBtns = $$(".filters button");
+  var works = $$(".work");
+  filterBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var cat = btn.getAttribute("data-filter");
+      filterBtns.forEach(function (x) { x.setAttribute("aria-pressed", String(x === btn)); });
+      works.forEach(function (w) {
+        var show = cat === "todos" || w.getAttribute("data-cat") === cat;
+        var was = !w.hidden;
+        w.hidden = !show;
+        if (show) {
+          // Lo que aparece por el filtro se muestra entero, sin esperar al desplazamiento
+          $$(".reveal", w).forEach(function (el) { el.classList.add("is-in"); });
+          if (!was && !reduce.matches) {
+            w.classList.remove("is-entering"); void w.offsetWidth; w.classList.add("is-entering");
+          }
+        }
+      });
+    });
+  });
+
+  // Un enlace a un proyecto oculto por el filtro vuelve a mostrar todos
+  $$('a[href^="#p-"]').forEach(function (a) {
+    a.addEventListener("click", function () {
+      var t = document.getElementById(a.getAttribute("href").slice(1));
+      if (t && t.hidden) filterBtns[0].click();
+    });
+  });
 
   /* ---------- Contacto ---------- */
   var EMAIL = "gbsoltech@gmail.com";
