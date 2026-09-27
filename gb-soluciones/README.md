@@ -1,6 +1,6 @@
 # GB Soluciones Tecnológicas · sitio portfolio
 
-Sitio estático (HTML, CSS y JavaScript sin dependencias) que presenta a GB Soluciones Tecnológicas y cuatro proyectos.
+Sitio estático (HTML, CSS y JavaScript sin dependencias) que presenta a GB Soluciones Tecnológicas y doce proyectos.
 
 ## Archivos
 
