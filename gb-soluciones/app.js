@@ -108,6 +108,13 @@
       "CV virtual de Gianluca · proyecto personal",
       "Recorrido UF 208 · experiencia 3D para Gazda Rossi"
     ];
+    var plateLinks = [
+      ["https://la-pasion-de-rosas-demo.biancogianluca19.chatgpt.site", "Abrir la demo", "Abrir la demo de La Pasión de Rosas"],
+      ["https://menu-lodegus-demo.biancogianluca19.chatgpt.site", "Abrir el menú", "Abrir el menú de Lo de Gus"],
+      ["https://gianluca-bianco-cv.biancogianluca19.chatgpt.site", "Abrir el CV", "Abrir el CV virtual de Gianluca"],
+      ["https://gazda-rossi-uf208-recorrido.biancogianluca19.chatgpt.site", "Abrir el recorrido", "Abrir el recorrido 3D de la UF 208"]
+    ];
+    var link = $("#plate-link"), pill = $("#plate-pill");
     var nEl = $("#plate-n"), nameEl = $("#plate-name"), fill = $(".plate__bar span", plate);
     var DUR = 6000, current = 0, timer = null, hovering = false;
     plate.style.setProperty("--dur", DUR + "ms");
@@ -117,6 +124,9 @@
       imgs.forEach(function (im, k) { im.classList.toggle("is-active", k === current); });
       nEl.textContent = current + 1;
       nameEl.textContent = names[current];
+      link.href = plateLinks[current][0];
+      link.setAttribute("aria-label", plateLinks[current][2] + " (se abre en otra pestaña)");
+      pill.firstChild.nodeValue = plateLinks[current][1] + " ";
       fill.style.animation = "none"; void fill.offsetWidth; fill.style.animation = "";
       schedule();
     }

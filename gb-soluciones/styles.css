@@ -217,6 +217,7 @@ b, strong { font-weight: 500; }
 
 .plate { margin: 0; }
 .plate__frame {
+  display: block; cursor: pointer;
   position: relative; aspect-ratio: 3 / 2; overflow: hidden;
   background: var(--paper-2); box-shadow: var(--shadow);
 }
@@ -290,6 +291,27 @@ b, strong { font-weight: 500; }
 .work__specs { list-style: none; margin: 4px 0 8px; padding: 0; width: 100%; max-width: 30em; border-top: 1px solid var(--line); }
 .work__specs li { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; font-weight: 400; color: var(--muted); }
 .work__specs li::before { content: ""; width: 14px; height: 1px; background: var(--gold-line); flex: none; }
+
+/* Etiqueta "Abrir" sobre los recortes */
+.pill {
+  position: absolute; left: 16px; bottom: 16px; z-index: 2;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 16px; border-radius: 999px;
+  background: rgba(255, 255, 255, .92); color: #19233A;
+  font: 500 13px/1 var(--sans); letter-spacing: .03em;
+  box-shadow: 0 6px 20px -8px rgba(17, 26, 46, .45);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  transition: background-color .35s var(--ease), color .35s var(--ease), transform .35s var(--ease);
+}
+.pill span { transition: transform .35s var(--ease); }
+.plate__frame:hover .pill, .work__media:hover .pill,
+.plate__frame:focus-visible .pill, .work__media:focus-visible .pill { background: #1C2A48; color: #F2F1EC; transform: translateY(-2px); }
+.plate__frame:hover .pill span, .work__media:hover .pill span { transform: translate(2px, -2px); }
+.work__main { position: relative; }
+.work__main::after { content: ""; position: absolute; inset: 0; background: rgba(17, 26, 46, 0); transition: background-color .5s var(--ease); pointer-events: none; }
+.work__media:hover .work__main::after { background: rgba(17, 26, 46, .08); }
+.work__media { cursor: pointer; text-decoration: none; }
+.work--flip .work__main .pill { left: auto; right: 16px; }
 
 /* ---------- Servicios ---------- */
 .services { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(40px, 7vw, 120px); }
@@ -406,6 +428,7 @@ b, strong { font-weight: 500; }
   .work--flip .work__media { order: 0; }
   .work__detail, .work--flip .work__detail { left: auto; right: 4%; width: 32%; }
   .work__media { padding-bottom: 12%; }
+  .work--flip .work__main .pill { left: 16px; right: auto; }
   .services { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
