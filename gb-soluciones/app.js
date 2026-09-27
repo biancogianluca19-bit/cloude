@@ -4,7 +4,6 @@
   var doc = document.documentElement;
   doc.classList.add("js");
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
-  var finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
   var $ = function (s, c) { return (c || document).querySelector(s); };
   var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
 
@@ -72,173 +71,70 @@
   /* ---------- Aparición al desplazarse ---------- */
   var reveals = $$(".reveal");
   // Pequeño escalonado entre hermanos de un mismo grupo
-  $$(".projects, .services, .steps").forEach(function (g) {
+  $$(".services, .steps").forEach(function (g) {
     $$(".reveal", g).forEach(function (el, i) { el.style.setProperty("--d", (i % 4) * 0.08 + "s"); });
   });
   if (!("IntersectionObserver" in window) || reduce.matches) {
     reveals.forEach(function (el) { el.classList.add("is-in"); });
   } else {
+    // Las imágenes arrancan recortadas con clip-path y el observador no las
+    // detecta; por eso se observa el proyecto que las contiene.
+    var targets = new Map();
+    reveals.forEach(function (el) {
+      var t = el.classList.contains("work__media") ? el.parentElement : el;
+      if (!targets.has(t)) targets.set(t, []);
+      targets.get(t).push(el);
+    });
     var revObs = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
-        if (en.isIntersecting) { en.target.classList.add("is-in"); revObs.unobserve(en.target); }
+        if (!en.isIntersecting) return;
+        targets.get(en.target).forEach(function (el) { el.classList.add("is-in"); });
+        revObs.unobserve(en.target);
       });
     }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
-    reveals.forEach(function (el) {
-      if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add("is-in");
-      else revObs.observe(el);
+    targets.forEach(function (els, t) {
+      if (t.getBoundingClientRect().top < window.innerHeight) els.forEach(function (el) { el.classList.add("is-in"); });
+      else revObs.observe(t);
     });
   }
 
   /* ---------- Vitrina de la portada ---------- */
-  var show = $("#showcase");
-  if (show) {
-    var tabs = $$("[role=tab]", show);
-    var desk = $$(".browser__screen img", show);
-    var mob = $$(".phone__screen img", show);
-    var url = $("#showcase-url");
-    var DUR = 5000;
-    var current = 0, timer = null, hovering = false;
-    show.style.setProperty("--dur", DUR + "ms");
+  var plate = $("#plate");
+  if (plate) {
+    var imgs = $$(".plate__frame img", plate);
+    var names = [
+      "La Pasión de Rosas · demo de diseño",
+      "Lo de Gus · demo de diseño",
+      "CV virtual de Gianluca · proyecto personal",
+      "Recorrido UF 208 · experiencia 3D para Gazda Rossi"
+    ];
+    var nEl = $("#plate-n"), nameEl = $("#plate-name"), fill = $(".plate__bar span", plate);
+    var DUR = 6000, current = 0, timer = null, hovering = false;
+    plate.style.setProperty("--dur", DUR + "ms");
 
-    function go(i, user) {
-      current = (i + tabs.length) % tabs.length;
-      tabs.forEach(function (t, k) {
-        t.setAttribute("aria-selected", String(k === current));
-        t.tabIndex = k === current ? 0 : -1;
-      });
-      desk.forEach(function (im, k) { im.classList.toggle("is-active", k === current); });
-      mob.forEach(function (im, k) { im.classList.toggle("is-active", k === current); });
-      url.textContent = tabs[current].getAttribute("data-url");
-      // Reinicia la barra de tiempo
-      var fill = $(".bar span", tabs[current]);
+    function go(i) {
+      current = (i + imgs.length) % imgs.length;
+      imgs.forEach(function (im, k) { im.classList.toggle("is-active", k === current); });
+      nEl.textContent = current + 1;
+      nameEl.textContent = names[current];
       fill.style.animation = "none"; void fill.offsetWidth; fill.style.animation = "";
       schedule();
-      if (user) tabs[current].focus();
     }
     function schedule() {
       clearTimeout(timer);
       var playing = !reduce.matches && !hovering && !document.hidden;
-      show.classList.toggle("is-playing", !reduce.matches);
-      show.classList.toggle("is-paused", !playing);
+      plate.classList.toggle("is-playing", !reduce.matches);
+      plate.classList.toggle("is-paused", !playing);
       if (playing) timer = setTimeout(function () { go(current + 1); }, DUR);
     }
-    tabs.forEach(function (t, k) {
-      t.addEventListener("click", function () { go(k); });
-      t.addEventListener("keydown", function (e) {
-        if (e.key === "ArrowRight") { e.preventDefault(); go(current + 1, true); }
-        if (e.key === "ArrowLeft") { e.preventDefault(); go(current - 1, true); }
-      });
-    });
-    show.addEventListener("mouseenter", function () { hovering = true; schedule(); });
-    show.addEventListener("mouseleave", function () { hovering = false; go(current); });
-    show.addEventListener("focusin", function () { hovering = true; schedule(); });
-    show.addEventListener("focusout", function () { hovering = false; schedule(); });
+    $("#plate-prev").addEventListener("click", function () { go(current - 1); });
+    $("#plate-next").addEventListener("click", function () { go(current + 1); });
+    plate.addEventListener("mouseenter", function () { hovering = true; schedule(); });
+    plate.addEventListener("mouseleave", function () { hovering = false; go(current); });
+    plate.addEventListener("focusin", function () { hovering = true; schedule(); });
+    plate.addEventListener("focusout", function () { hovering = false; schedule(); });
     document.addEventListener("visibilitychange", schedule);
     go(0);
-  }
-
-  /* ---------- Selector computadora / celular ---------- */
-  var grid = $("#projects");
-  $$(".viewtoggle button").forEach(function (b, _, all) {
-    b.addEventListener("click", function () {
-      all.forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
-      grid.setAttribute("data-view", b.getAttribute("data-view"));
-    });
-  });
-
-  /* ---------- Inclinación suave de tarjetas ---------- */
-  $$(".card").forEach(function (card) {
-    card.addEventListener("pointermove", function (e) {
-      if (reduce.matches || !finePointer.matches) return;
-      var r = card.getBoundingClientRect();
-      var x = (e.clientX - r.left) / r.width - 0.5;
-      var y = (e.clientY - r.top) / r.height - 0.5;
-      card.style.setProperty("--ry", (x * 4).toFixed(2) + "deg");
-      card.style.setProperty("--rx", (-y * 4).toFixed(2) + "deg");
-    });
-    card.addEventListener("pointerleave", function () {
-      card.style.setProperty("--ry", "0deg");
-      card.style.setProperty("--rx", "0deg");
-    });
-  });
-
-  /* ---------- Campo de puntos de la portada ---------- */
-  var cv = $("#hero-field");
-  if (cv && cv.getContext) {
-    var ctx = cv.getContext("2d");
-    var hero = cv.parentElement;
-    var W = 0, H = 0, dpr = 1, pts = [], GAP = 26;
-    var mouse = { x: -9999, y: -9999, tx: -9999, ty: -9999 };
-    var running = false, visible = true, raf = 0, t0 = performance.now();
-
-    function build() {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      W = hero.clientWidth; H = hero.clientHeight;
-      cv.width = W * dpr; cv.height = H * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      GAP = W < 600 ? 22 : 26;
-      pts = [];
-      for (var y = GAP / 2; y < H; y += GAP) {
-        for (var x = GAP / 2; x < W; x += GAP) {
-          // Semilla fija por punto para destellos amarillos esporádicos
-          pts.push({ x: x, y: y, s: Math.random() });
-        }
-      }
-    }
-    function draw(now) {
-      var t = (now - t0) / 1000;
-      ctx.clearRect(0, 0, W, H);
-      mouse.x += (mouse.tx - mouse.x) * 0.12;
-      mouse.y += (mouse.ty - mouse.y) * 0.12;
-      for (var i = 0; i < pts.length; i++) {
-        var p = pts[i];
-        // Onda diagonal que recorre la grilla
-        var w = Math.sin(p.x * 0.011 + p.y * 0.006 - t * 1.1) * 0.5 + 0.5;
-        var fade = Math.min(1, (p.x / W) * 1.6); // más tenue detrás del texto
-        var dx = p.x - mouse.x, dy = p.y - mouse.y;
-        var d = Math.sqrt(dx * dx + dy * dy);
-        var near = d < 160 ? 1 - d / 160 : 0;
-        var r = 0.8 + w * 1.1 + near * 2.2;
-        var ox = near ? (dx / (d || 1)) * near * 6 : 0;
-        var oy = near ? (dy / (d || 1)) * near * 6 : 0;
-        var spark = p.s > 0.985 ? (Math.sin(t * 1.6 + p.s * 90) * 0.5 + 0.5) : 0;
-        if (near > 0.35 || spark > 0.6) {
-          ctx.fillStyle = "rgba(255,199,44," + (0.35 + Math.max(near, spark) * 0.55).toFixed(3) + ")";
-        } else {
-          ctx.fillStyle = "rgba(120,150,255," + ((0.08 + w * 0.22) * (0.35 + fade * 0.65)).toFixed(3) + ")";
-        }
-        ctx.beginPath();
-        ctx.arc(p.x + ox, p.y + oy, r, 0, 6.2832);
-        ctx.fill();
-      }
-    }
-    function loop(now) {
-      if (!running) return;
-      draw(now);
-      raf = requestAnimationFrame(loop);
-    }
-    function update() {
-      var should = visible && !document.hidden && !reduce.matches;
-      if (should && !running) { running = true; raf = requestAnimationFrame(loop); }
-      if (!should && running) { running = false; cancelAnimationFrame(raf); }
-      if (!should) draw(t0 + 2000); // cuadro fijo
-    }
-    hero.addEventListener("pointermove", function (e) {
-      if (e.pointerType !== "mouse") return;
-      var r = hero.getBoundingClientRect();
-      mouse.tx = e.clientX - r.left; mouse.ty = e.clientY - r.top;
-      if (mouse.x < -1000) { mouse.x = mouse.tx; mouse.y = mouse.ty; }
-    });
-    hero.addEventListener("pointerleave", function () { mouse.tx = mouse.ty = -9999; });
-    if ("IntersectionObserver" in window) {
-      new IntersectionObserver(function (en) { visible = en[0].isIntersecting; update(); }).observe(hero);
-    }
-    document.addEventListener("visibilitychange", update);
-    if (reduce.addEventListener) reduce.addEventListener("change", update);
-    var rt;
-    window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(function () { build(); update(); }, 150); });
-    build();
-    update();
   }
 
   /* ---------- Contacto ---------- */

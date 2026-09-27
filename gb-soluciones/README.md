@@ -8,11 +8,11 @@ Sitio estático (HTML, CSS y JavaScript sin dependencias) que presenta a GB Solu
 |---|---|
 | `index.html` | Todo el contenido: inicio, proyectos, servicios, proceso, sobre GB y contacto |
 | `styles.css` | Paleta, tipografías, diseño adaptable y modo oscuro |
-| `app.js` | Menú, animaciones, vitrina de la portada, selector computadora/celular y formulario de consulta |
-| `img/` | Capturas reales de los cuatro proyectos (computadora 1440×900 y celular 390×844) |
+| `app.js` | Menú, animaciones, vitrina de la portada y formulario de consulta |
+| `img/` | Recortes de capturas reales: `<proyecto>-principal.jpg` (1800×1200, computadora) y `<proyecto>-detalle.jpg` (780×975) |
 
-Paleta: azul noche `#071330`, azul real `#2450E0`, amarillo `#FFC72C`.
-Tipografías (Google Fonts): Bricolage Grotesque, Onest y JetBrains Mono.
+Paleta: azul marino `#1C2A48` / `#16213A`, dorado `#B8964F` (detalles) y blanco frío `#F4F5F7`.
+Tipografías (Google Fonts): Newsreader (títulos) y Albert Sans (texto).
 
 ## Probarlo en tu computadora
 
@@ -41,7 +41,7 @@ Arrastrá la carpeta `gb-soluciones` a app.netlify.com/drop.
 
 ## Actualizar las capturas
 
-Las imágenes de `img/` se tomaron de los sitios publicados el 27/09/2026. Si cambia algún proyecto, reemplazá el archivo con el mismo nombre y tamaño (`<proyecto>-desk.jpg` y `<proyecto>-mob.jpg`).
+Las imágenes de `img/` son recortes de capturas de los sitios publicados, tomadas el 27/09/2026. Si cambia algún proyecto, reemplazá el archivo con el mismo nombre y proporción (3:2 para `-principal`, 4:5 para `-detalle`).
 
 ## Enlaces de los proyectos
 
