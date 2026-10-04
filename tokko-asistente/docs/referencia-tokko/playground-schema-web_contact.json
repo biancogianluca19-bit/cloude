@@ -1,0 +1,84 @@
+{
+  "basePath": "/",
+  "apiVersion": "1.0",
+  "swaggerVersion": "1.1",
+  "apis": [
+    {
+      "operations": [
+        {
+          "httpMethod": "POST",
+          "nickname": "web-contact",
+          "responseClass": "None",
+          "summary": "Posts webcontact into tokko broker",
+          "notes": "Posts a contact form into Tokko Broker. Require Api Key.<BR>This form is illustrative, body of the request must be a JSON object containing the following parameters<BR> Notes: At least 1 contact information field must be filled (phone, email or cellphone)",
+          "parameters": [
+            {
+              "dataType": "String",
+              "paramType": "body",
+              "required": true,
+              "name": "name",
+              "description": "Name of the contact"
+            },
+            {
+              "dataType": "String",
+              "required": false,
+              "paramType": "body",
+              "name": "cellphone",
+              "description": "Cellphone of the contact"
+            },
+            {
+              "dataType": "String",
+              "required": false,
+              "paramType": "body",
+              "name": "phone",
+              "description": "Phone of the contact"
+            },
+            {
+              "dataType": "String",
+              "required": false,
+              "paramType": "body",
+              "name": "email",
+              "description": "E-mail of the contact"
+            },
+            {
+              "dataType": "String",
+              "required": false,
+              "paramType": "body",
+              "name": "work_name",
+              "description": "Name of the bussiness of the contact"
+            },
+            {
+              "dataType": "String",
+              "required": false,
+              "paramType": "body",
+              "name": "text",
+              "description": "text of the form"
+            },
+            {
+              "dataType": "String",
+              "required": false,
+              "paramType": "body",
+              "name": "properties",
+              "description": "List of properties (ids)related to this contact form. ie: '[1,2,546]'"
+            },
+            {
+              "dataType": "String",
+              "required": false,
+              "paramType": "body",
+              "name": "tags",
+              "description": "List of tags (strings)related to this contact form. ie: '['AdSense','Inversor']'"
+            },
+            {
+              "dataType": "String",
+              "required": false,
+              "paramType": "body",
+              "name": "agent_mail",
+              "description": "Email of the user that receives the lead"
+            }
+          ]
+        }
+      ],
+      "path": "/api/v1/webcontact/"
+    }
+  ]
+}

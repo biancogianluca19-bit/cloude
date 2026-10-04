@@ -1,0 +1,280 @@
+{
+  "basePath": "/",
+  "apiVersion": "1.0",
+  "swaggerVersion": "1.1",
+  "apis": [
+    {
+      "operations": [
+        {
+          "httpMethod": "GET",
+          "nickname": "development-list",
+          "responseClass": "List",
+          "summary": "List of available developments.",
+          "notes": "\nReturn all of the available developments.\nThis developments must've been marked as \"show on web\" on their details.\nRequires Api Key.\n",
+          "parameters": [
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "lang",
+              "description": "Language of the results, defaults to 'en'",
+              "allowableValues": {
+                "values": [
+                  "es_ar",
+                  "en"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "format",
+              "description": "Format of the results, defaults to 'json'",
+              "allowableValues": {
+                "values": [
+                  "json",
+                  "xml"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "int",
+              "paramType": "query",
+              "required": false,
+              "name": "limit",
+              "description": "Number of results to show. Default: 20"
+            },
+            {
+              "dataType": "int",
+              "paramType": "query",
+              "required": false,
+              "name": "offset",
+              "description": "Number of result item to start showing. Useful for pagination purposes {Combined with 'limit' parameter}. Default: 0"
+            }
+          ]
+        }
+      ],
+      "path": "/api/v1/development/"
+    },
+    {
+      "operations": [
+        {
+          "httpMethod": "GET",
+          "nickname": "development-detail",
+          "responseClass": "Object",
+          "summary": "Development information",
+          "notes": "Returns a property. Require Api Key.",
+          "parameters": [
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "lang",
+              "description": "Language of the results, defaults to 'en'",
+              "allowableValues": {
+                "values": [
+                  "es_ar",
+                  "en"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "format",
+              "description": "Format of the results, defaults to 'json'",
+              "allowableValues": {
+                "values": [
+                  "json",
+                  "xml"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "int",
+              "paramType": "path",
+              "required": true,
+              "name": "id",
+              "description": "ID of resource"
+            }
+          ]
+        }
+      ],
+      "path": "/api/v1/development/{id}/"
+    },
+    {
+      "operations": [
+        {
+          "httpMethod": "GET",
+          "nickname": "development-summary",
+          "responseClass": "List",
+          "summary": "Development summary by company.",
+          "notes": "Returns development summary grouped by company. Require Api Key.",
+          "parameters": [
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "lang",
+              "description": "Language of the results, defaults to 'en'",
+              "allowableValues": {
+                "values": [
+                  "es_ar",
+                  "en"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "format",
+              "description": "Format of the results, defaults to 'json'",
+              "allowableValues": {
+                "values": [
+                  "json",
+                  "xml"
+                ],
+                "valueType": "list"
+              }
+            }
+          ]
+        }
+      ],
+      "path": "/api/v1/development/summary"
+    },
+    {
+      "operations": [
+        {
+          "httpMethod": "GET",
+          "nickname": "development-search-by-units",
+          "responseClass": "List",
+          "summary": "Search developments by units.",
+          "notes": "Returns developments based on property units search criteria. Require Api Key.",
+          "parameters": [
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "lang",
+              "description": "Language of the results, defaults to 'en'",
+              "allowableValues": {
+                "values": [
+                  "es_ar",
+                  "en"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "format",
+              "description": "Format of the results, defaults to 'json'",
+              "allowableValues": {
+                "values": [
+                  "json",
+                  "xml"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "int",
+              "paramType": "query",
+              "required": false,
+              "name": "limit",
+              "description": "Number of results to show. Default: 20"
+            },
+            {
+              "dataType": "int",
+              "paramType": "query",
+              "required": false,
+              "name": "offset",
+              "description": "Number of result item to start showing. Default: 0"
+            },
+            {
+              "dataType": "search_data",
+              "paramType": "query",
+              "required": true,
+              "name": "data",
+              "description": "Search data object with the same format as the property search endpoint."
+            }
+          ]
+        }
+      ],
+      "path": "/api/v1/development/search_by_units"
+    },
+    {
+      "operations": [
+        {
+          "httpMethod": "GET",
+          "nickname": "development-search-by-units-geo-data",
+          "responseClass": "List",
+          "summary": "Search developments geo data by units.",
+          "notes": "Returns developments geo data based on property units search criteria. Require Api Key.",
+          "parameters": [
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "lang",
+              "description": "Language of the results, defaults to 'en'",
+              "allowableValues": {
+                "values": [
+                  "es_ar",
+                  "en"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "format",
+              "description": "Format of the results, defaults to 'json'",
+              "allowableValues": {
+                "values": [
+                  "json",
+                  "xml"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "int",
+              "paramType": "query",
+              "required": false,
+              "name": "limit",
+              "description": "Number of results to show. Default: 20"
+            },
+            {
+              "dataType": "int",
+              "paramType": "query",
+              "required": false,
+              "name": "offset",
+              "description": "Number of result item to start showing. Default: 0"
+            },
+            {
+              "dataType": "search_data",
+              "paramType": "query",
+              "required": true,
+              "name": "data",
+              "description": "Search data object with the same format as the property search endpoint."
+            }
+          ]
+        }
+      ],
+      "path": "/api/v1/development/search_by_units_geo_data"
+    }
+  ]
+}

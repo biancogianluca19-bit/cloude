@@ -1,0 +1,18 @@
+{
+  "name": "tokko-asistente",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Asistente local que arma borradores de respuesta a consultas inmobiliarias usando la ficha de Tokko.",
+  "type": "module",
+  "main": "server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test",
+    "descubrir": "node scripts/descubrir-campos.js",
+    "ejemplos": "node scripts/generar-ejemplos.js"
+  },
+  "license": "UNLICENSED"
+}

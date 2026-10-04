@@ -1,0 +1,437 @@
+{
+  "basePath": "/",
+  "apiVersion": "1.0",
+  "swaggerVersion": "1.1",
+  "models": {
+    "search_data": {
+      "properties": {
+        "current_localization_type": {
+          "type": "string",
+          "description": "Type of localization filter to apply. Values: 'country', 'state', 'division'",
+          "required": true
+        },
+        "current_localization_id": {
+          "type": "List",
+          "description": "List of locations {Matching 'current_localization_type' criteria.} In case of current_localization_type == 'country', this value must be only the id of the country and not a list.",
+          "required": true
+        },
+        "price_from": {
+          "type": "int",
+          "required": true
+        },
+        "price_to": {
+          "type": "int",
+          "required": true
+        },
+        "operation_types": {
+          "type": "list",
+          "required": true,
+          "description": "List of operations types to filter. Values 1: Sale, 2: Rent, 3: Temporary_rent"
+        },
+        "property_types": {
+          "type": "list",
+          "required": true,
+          "description": "List of property types to filter. Values 1: Land, 2: Appartment, 3: House, 4: Weekend house, 5: Office, 6: Mooring, 7: Bussiness premises, 8:Commercial Building"
+        },
+        "currency": {
+          "type": "String",
+          "required": true,
+          "description": "Currency filter, Values: USD or ARS"
+        },
+        "with_tags": {
+          "type": "list",
+          "required": true,
+          "description": "List of tags that the property must contain. Check the Tags Api to check available tags."
+        },
+        "without_tags": {
+          "type": "list",
+          "required": true,
+          "description": "List of tags that the property must not contain. Check the Tags Api to check available tags."
+        },
+        "with_custom_tags": {
+          "type": "list",
+          "required": true,
+          "description": "List of custom tags that the property must contain. Check the Tags Api to check available custom tags."
+        },
+        "without_custom_tags": {
+          "type": "list",
+          "required": true,
+          "description": "List of custom tags that the property must not contain. Check the Tags Api to check available custom tags."
+        },
+        "filters": {
+          "type": "list",
+          "required": true,
+          "description": "List of advanced filters. Filter definition: ['<field_name>', '<operator>', '<value>'] for numeric fields, using '>', '<', '=' operators or ['<field_name>', '<value>', ''] for booleans."
+        }
+      },
+      "id": "search_data"
+    }
+  },
+  "apis": [
+    {
+      "operations": [
+        {
+          "httpMethod": "GET",
+          "nickname": "property-list",
+          "responseClass": "List",
+          "summary": "List of available properties.",
+          "notes": "\nReturn all of the available properties.\nThis properties must've been marked as \"show on web\" on their details.\nRequires Api Key.\n",
+          "parameters": [
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "lang",
+              "description": "Language of the results, defaults to 'en'",
+              "allowableValues": {
+                "values": [
+                  "es_ar",
+                  "en"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "format",
+              "description": "Format of the results, defaults to 'json'",
+              "allowableValues": {
+                "values": [
+                  "json",
+                  "xml"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "int",
+              "paramType": "query",
+              "required": false,
+              "name": "limit",
+              "description": "Number of results to show. Default: 20"
+            },
+            {
+              "dataType": "int",
+              "paramType": "query",
+              "required": false,
+              "name": "offset",
+              "description": "Number of result item to start showing. Useful for pagination purposes {Combined with 'limit' parameter}. Default: 0"
+            },
+            {
+              "dataType": "boolean",
+              "paramType": "query",
+              "required": false,
+              "name": "filtered_attributes",
+              "description": "If true, the response will retrieve only the attributes that are configured and are not empty. Default: False"
+            }
+          ]
+        }
+      ],
+      "path": "/api/v1/property/"
+    },
+    {
+      "operations": [
+        {
+          "httpMethod": "GET",
+          "nickname": "property-list-search",
+          "responseClass": "List",
+          "summary": "Search of available properties.",
+          "notes": "\nReturn all of the available properties that fit the search parameters.\nThis properties must've been marked as \"show on web\" on their details.\nRequires Api Key.\n",
+          "parameters": [
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "lang",
+              "description": "Language of the results, defaults to 'en'",
+              "allowableValues": {
+                "values": [
+                  "es_ar",
+                  "en"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "format",
+              "description": "Format of the results, defaults to 'json'",
+              "allowableValues": {
+                "values": [
+                  "json",
+                  "xml"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "int",
+              "paramType": "query",
+              "required": false,
+              "name": "limit",
+              "description": "Number of results to show. Default: 20"
+            },
+            {
+              "dataType": "int",
+              "paramType": "query",
+              "required": false,
+              "name": "offset",
+              "description": "Number of result item to start showing. Useful for pagination purposes {Combined with 'limit' parameter}. Default: 0"
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "order_by",
+              "description": "Name of the field to order the results by. Notes: it can also be used the option 'random' which will shuffle the results within the limit+offset combination {Useful for starred items}. Default: price",
+              "allowableValues": {
+                "values": [
+                  "random",
+                  "price",
+                  "location",
+                  "suite_amount",
+                  "is_starred_on_web",
+                  "age",
+                  "situation",
+                  "expenses",
+                  "room_amount",
+                  "bathroom_amount",
+                  "toilet_amount",
+                  "parking_lot_amount",
+                  "floors_amount",
+                  "surface",
+                  "roofed_surface",
+                  "semiroofed_surface",
+                  "total_surface"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "order",
+              "description": "Sets the way the order_by option is used. Default: ASC",
+              "allowableValues": {
+                "values": [
+                  "ASC",
+                  "DESC"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "search_data",
+              "paramType": "query",
+              "required": true,
+              "name": "data",
+              "description": "\n<BR> Examples:\n<BR>\n<BR> Searching for all properties in Argentina (Country=1), which are available for all operations, and the prices are between USD 0 and USD 4.500.000. Also it must have more than 2 bathrooms, Expenses be lower than 400, must have Jacuzzi (34), Solarium (40) and must not be work able (47).\n<BR><BR>{\"current_localization_id\":1, \"current_localization_type\": \"country\",\"price_from\":0,\"price_to\":4500000,\"operation_types\":[1,2,3],\"property_types\":[1,2,3,4,5,6,7], \"currency\":\"USD\",\"filters\":[[\"expenses\", \"<\", \"400\"], [\"bathroom_amount\", \">\", \"2\"]],\"with_tags\":[34, 40],\"without_tags\":[47]}\n<BR><BR>\nSame search, but instead of looking in Argentina, we just focus in Palermo (Capital federal) And Belgrano (Capital Federal)\n<BR><BR>{\"current_localization_id\":[24728, 24682], \"current_localization_type\": \"division\",\"price_from\":0,\"price_to\":4500000,\"operation_types\":[1,2,3],\"property_types\":[1,2,3,4,5,6,7], \"currency\":\"USD\",\"filters\":[[\"expenses\", \"<\", \"400\"], [\"bathroom_amount\", \">\", \"2\"]],\"with_tags\":[34, 40],\"without_tags\":[47]}\n"
+            }
+          ]
+        }
+      ],
+      "path": "/api/v1/property/search"
+    },
+    {
+      "operations": [
+        {
+          "httpMethod": "GET",
+          "nickname": "property-detail",
+          "responseClass": "Object",
+          "summary": "Property information",
+          "notes": "Returns a property. Require Api Key.",
+          "parameters": [
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "lang",
+              "description": "Language of the results, defaults to 'en'",
+              "allowableValues": {
+                "values": [
+                  "es_ar",
+                  "en"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "format",
+              "description": "Format of the results, defaults to 'json'",
+              "allowableValues": {
+                "values": [
+                  "json",
+                  "xml"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "int",
+              "paramType": "path",
+              "required": true,
+              "name": "id",
+              "description": "ID of resource"
+            }
+          ]
+        }
+      ],
+      "path": "/api/v1/property/{id}/"
+    },
+    {
+      "operations": [
+        {
+          "httpMethod": "GET",
+          "nickname": "property-geo-data",
+          "responseClass": "List",
+          "summary": "Property geo data for mapping.",
+          "notes": "Returns properties with geo coordinates for mapping. Require Api Key.",
+          "parameters": [
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "lang",
+              "description": "Language of the results, defaults to 'en'",
+              "allowableValues": {
+                "values": [
+                  "es_ar",
+                  "en"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "format",
+              "description": "Format of the results, defaults to 'json'",
+              "allowableValues": {
+                "values": [
+                  "json",
+                  "xml"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "search_data",
+              "paramType": "query",
+              "required": true,
+              "name": "data",
+              "description": "Search data object with the same format as the search endpoint."
+            }
+          ]
+        }
+      ],
+      "path": "/api/v1/property/geo_data"
+    },
+    {
+      "operations": [
+        {
+          "httpMethod": "GET",
+          "nickname": "property-by-location",
+          "responseClass": "List",
+          "summary": "Properties grouped by location.",
+          "notes": "Returns properties grouped by location. Require Api Key.",
+          "parameters": [
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "lang",
+              "description": "Language of the results, defaults to 'en'",
+              "allowableValues": {
+                "values": [
+                  "es_ar",
+                  "en"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "format",
+              "description": "Format of the results, defaults to 'json'",
+              "allowableValues": {
+                "values": [
+                  "json",
+                  "xml"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "search_data",
+              "paramType": "query",
+              "required": true,
+              "name": "data",
+              "description": "Search data object with the same format as the search endpoint."
+            }
+          ]
+        }
+      ],
+      "path": "/api/v1/property/by_location"
+    },
+    {
+      "operations": [
+        {
+          "httpMethod": "GET",
+          "nickname": "property-search-summary",
+          "responseClass": "Object",
+          "summary": "Search summary with filters and counts.",
+          "notes": "Returns search summary with available filters and property counts. Require Api Key.",
+          "parameters": [
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "lang",
+              "description": "Language of the results, defaults to 'en'",
+              "allowableValues": {
+                "values": [
+                  "es_ar",
+                  "en"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "format",
+              "description": "Format of the results, defaults to 'json'",
+              "allowableValues": {
+                "values": [
+                  "json",
+                  "xml"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "search_data",
+              "paramType": "query",
+              "required": true,
+              "name": "data",
+              "description": "Search data object with the same format as the search endpoint."
+            }
+          ]
+        }
+      ],
+      "path": "/api/v1/property/get_search_summary"
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "_aviso": "EJEMPLO. Consultas inventadas para probar la app y los tests. Nombres, mails (example.com) y teléfonos (con ceros) son ficticios.",
+  "consultas": [
+    {
+      "titulo": "Mail con etiquetas: disponibilidad, expensas y visita (EJ-101)",
+      "texto": "Nombre: Martina Ejemplo\nEmail: martina@example.com\nTeléfono: +54 9 11 0000-1111\nPropiedad: EJEMPLO - Casa en Santa Juana (EJ-101)\nMensaje: Hola, sigue disponible? cuanto son las expensas? Se puede ir a ver el sábado a la mañana?"
+    },
+    {
+      "titulo": "WhatsApp sin código: mascotas y requisitos en Canning Chico",
+      "texto": "[4/10/26, 10:15] Ramiro Ejemplo: Hola buenas! vi la casa de alquiler en canning chico, acepta mascotas? tengo un perro mediano. q requisitos piden?"
+    },
+    {
+      "titulo": "Mala ortografía: precio y metros del lote en El Rodal",
+      "texto": "ola kiero saver el presio del lote en el rodal y cuantos metros tiene"
+    },
+    {
+      "titulo": "Precio sin publicar y cochera (EJ-104)",
+      "texto": "Hola cuanto sale el alquiler del depto EJ-104? tiene cochera? Gracias, Sofía Ejemplo 11 0000 3333"
+    },
+    {
+      "titulo": "Pedido de info general con pocos datos en la ficha (EJ-108)",
+      "texto": "Hola, me interesa la casa ref EJ-108, me pasás info? Soy Lucía"
+    },
+    {
+      "titulo": "Requisitos de alquiler, dormitorios y baños (EJ-107)",
+      "texto": "Buenas tardes, por el alquiler de Santa Juana EJ-107, que requisitos piden? cuantos dormitorios tiene y cuantos baños?"
+    },
+    {
+      "titulo": "Por URL de la publicación: superficie",
+      "texto": "Hola! https://www.example.com/propiedad/900003-lote-venta-el-rodal cuanto mide? tiene agua corriente?"
+    },
+    {
+      "titulo": "DERIVA - Negociación (EJ-106)",
+      "texto": "Hola, la casa de Terralagos ref EJ-106 la dejan en 350 mil dolares? tengo el efectivo"
+    },
+    {
+      "titulo": "DERIVA - Dos propiedades",
+      "texto": "Buenas, me interesan la EJ-101 y la EJ-107, cual tiene mas metros?"
+    },
+    {
+      "titulo": "DERIVA - Propiedad reservada (EJ-105)",
+      "texto": "[4/10/26, 18:02] +54 9 11 0000-2222: Hola! la casa de monte grande ref EJ-105 esta disponible?"
+    },
+    {
+      "titulo": "DERIVA - No encontrada (GR-999)",
+      "texto": "Hola, consulto por la propiedad ref GR-999, sigue en venta?"
+    },
+    {
+      "titulo": "DERIVA - Financiación (EJ-106)",
+      "texto": "Hola, la casa EJ-106 es apta crédito? se puede financiar una parte?"
+    },
+    {
+      "titulo": "DERIVA - Seña (EJ-107)",
+      "texto": "Me encantó la EJ-107, quiero dejar una seña así no se la llevan"
+    },
+    {
+      "titulo": "DERIVA - Escritura (EJ-101)",
+      "texto": "La casa EJ-101 tiene escritura? esta todo en regla?"
+    },
+    {
+      "titulo": "DERIVA - Reclamo",
+      "texto": "Hace una semana que nadie me contesta por la EJ-101, es una verguenza"
+    },
+    {
+      "titulo": "DERIVA - Mensaje ambiguo",
+      "texto": "info"
+    }
+  ]
+}

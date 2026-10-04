@@ -1,0 +1,175 @@
+{
+  "basePath": "/",
+  "apiVersion": "1.0",
+  "swaggerVersion": "1.1",
+  "apis": [
+    {
+      "operations": [
+        {
+          "httpMethod": "GET",
+          "nickname": "location-detail",
+          "responseClass": "Object",
+          "summary": "Location information",
+          "notes": "Return a location information, including it's divisions. Doesn't require Api Key.",
+          "parameters": [
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "lang",
+              "description": "Language of the results, defaults to 'en'",
+              "allowableValues": {
+                "values": [
+                  "es_ar",
+                  "en"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "format",
+              "description": "Format of the results, defaults to 'json'",
+              "allowableValues": {
+                "values": [
+                  "json",
+                  "xml"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "int",
+              "paramType": "path",
+              "required": true,
+              "name": "id",
+              "description": "ID of resource"
+            }
+          ]
+        }
+      ],
+      "path": "/api/v1/location/{id}/"
+    },
+    {
+      "operations": [
+        {
+          "httpMethod": "GET",
+          "nickname": "location-quicksearch",
+          "responseClass": "Object",
+          "summary": "Location quicksearch",
+          "notes": "Returns a list of locations (divisions) that match the search criteria. The search can be filtered by text query, state, zip code and country. When zip_code and country are provided together, results are limited to divisions related to that zip code in that country. Doesn't require Api Key.",
+          "parameters": [
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "lang",
+              "description": "Language of the results, defaults to 'en'",
+              "allowableValues": {
+                "values": [
+                  "es_ar",
+                  "en"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "format",
+              "description": "Format of the results, defaults to 'json'",
+              "allowableValues": {
+                "values": [
+                  "json",
+                  "xml"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": true,
+              "name": "q",
+              "description": "Search query string. Can contain multiple words separated by spaces. Example: 'Barrancas Belgrano', 'Nordelta Portezuelo'"
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "scope",
+              "description": "Search scope: 'full' searches in full_location field, 'minimal' searches only in name field. Defaults to 'full'",
+              "allowableValues": {
+                "values": [
+                  "full",
+                  "minimal"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "order",
+              "description": "Sort order: 'asc' for ascending, 'desc' for descending. Defaults to 'desc'",
+              "allowableValues": {
+                "values": [
+                  "asc",
+                  "desc"
+                ],
+                "valueType": "list"
+              }
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "order_by",
+              "description": "Field to order by. Defaults to 'weight'. Common values: 'weight', 'name'"
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "type",
+              "description": "Filter by division type(s). Can be comma-separated list of division type IDs. Example: '1,2,3'"
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "state",
+              "description": "Filter by state ID(s). Can be comma-separated list of state IDs. Example: '1,2,3'. Results include divisions and their parent divisions in the specified states."
+            },
+            {
+              "dataType": "Integer",
+              "paramType": "query",
+              "required": false,
+              "name": "limit",
+              "description": "Maximum number of results to return. Defaults to 0 (no limit)"
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "zip_code",
+              "description": "Postal/zip code to filter results. Must be used together with 'country' parameter. When both are provided, results are limited to divisions related to this zip code in the specified country. Example: '1425', 'C1000'"
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "country",
+              "description": "Country identifier to filter results. Can be country ID (numeric) or ISO code (2-letter code). Must be used together with 'zip_code' parameter. When both are provided, results are limited to divisions related to the zip code in this country. Example: '1' (for ID) or 'AR' (for ISO code)"
+            }
+          ]
+        }
+      ],
+      "path": "/api/v1/location/quicksearch/"
+    }
+  ]
+}

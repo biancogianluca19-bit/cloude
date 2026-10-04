@@ -1,0 +1,206 @@
+{
+  "_nota": "Datos fijos de la inmobiliaria que usa el generador de borradores. Lo que está vacío todavía no está definido: completalo o pedile a Claude que te lo pregunte.",
+  "inmobiliaria": {
+    "nombre": "Gazda Rossi Propiedades",
+    "localidad": "Canning"
+  },
+  "tono": {
+    "_nota": "Definido por Gianluca el 4/10/2026. El emoji se agrega al final del saludo; en reclamos no se usa.",
+    "saludo": "Hola {nombre}!",
+    "saludoSinNombre": "Hola!",
+    "usarEmojis": true
+  },
+  "firma": {
+    "_nota": "Definido por Gianluca el 4/10/2026.",
+    "asesor": "Gianluca",
+    "texto": ""
+  },
+  "asesores": [],
+  "visitas": {
+    "_pendiente": "Horarios de visita. Mientras la lista esté vacía, el borrador le pregunta al cliente qué día le queda cómodo y no propone horarios.",
+    "horarios": [],
+    "reglas": ""
+  },
+  "privacidad": {
+    "_nota": "Definido por Gianluca el 4/10/2026. Si no se sabe si el barrio es cerrado, no se da la dirección. Los barrios de la lista cuentan como cerrados salvo que tengan \"cerrado\": false.",
+    "direccionExacta": "solo_fuera_de_barrios_cerrados",
+    "_opcionesDireccionExacta": [
+      "nunca",
+      "solo_fuera_de_barrios_cerrados",
+      "siempre"
+    ]
+  },
+  "requisitosAlquiler": {
+    "_nota": "Valores de referencia 2026 dichos por Gianluca. Todo borrador que los use muestra el aviso 'verificar importes antes de enviar'.",
+    "verificado": false,
+    "items": [
+      {
+        "clave": "garantia",
+        "texto": "Garantía propietaria"
+      },
+      {
+        "clave": "mes_alquiler",
+        "texto": "Un mes de alquiler"
+      },
+      {
+        "clave": "deposito",
+        "texto": "Un mes de depósito"
+      },
+      {
+        "clave": "honorarios",
+        "texto": "Honorarios: 4,15% + IVA sobre el total de 24 meses"
+      },
+      {
+        "clave": "sellado",
+        "texto": "Sellado: 1%"
+      },
+      {
+        "clave": "certificados",
+        "texto": "Certificados: aprox. ARS 200.000"
+      }
+    ]
+  },
+  "zonas": [
+    {
+      "nombre": "Canning",
+      "tipo": "localidad",
+      "alias": [
+        "canning"
+      ]
+    },
+    {
+      "nombre": "San Vicente",
+      "tipo": "localidad",
+      "alias": [
+        "san vicente"
+      ]
+    },
+    {
+      "nombre": "Monte Grande",
+      "tipo": "localidad",
+      "alias": [
+        "monte grande"
+      ]
+    },
+    {
+      "nombre": "Adrogué",
+      "tipo": "localidad",
+      "alias": [
+        "adrogue"
+      ]
+    }
+  ],
+  "barrios": [
+    {
+      "nombre": "Santa Juana",
+      "alias": [
+        "santa juana",
+        "sta juana",
+        "sta. juana"
+      ]
+    },
+    {
+      "nombre": "Santa Inés",
+      "alias": [
+        "santa ines",
+        "sta ines",
+        "sta. ines"
+      ]
+    },
+    {
+      "nombre": "Saint Thomas",
+      "alias": [
+        "saint thomas",
+        "st thomas",
+        "st. thomas",
+        "saint tomas",
+        "san tomas"
+      ]
+    },
+    {
+      "nombre": "Terralagos",
+      "alias": [
+        "terralagos",
+        "terra lagos",
+        "tierra lagos"
+      ]
+    },
+    {
+      "nombre": "Don Joaquín",
+      "alias": [
+        "don joaquin"
+      ]
+    },
+    {
+      "nombre": "San Simón",
+      "alias": [
+        "san simon"
+      ]
+    },
+    {
+      "nombre": "Echeverría del Lago",
+      "alias": [
+        "echeverria del lago"
+      ]
+    },
+    {
+      "nombre": "Fincas de San Vicente",
+      "alias": [
+        "fincas de san vicente",
+        "fincas san vicente"
+      ]
+    },
+    {
+      "nombre": "El Rodal",
+      "alias": [
+        "el rodal"
+      ]
+    },
+    {
+      "nombre": "Los Talas",
+      "alias": [
+        "los talas"
+      ]
+    },
+    {
+      "nombre": "Ayres de Canning",
+      "alias": [
+        "ayres de canning",
+        "aires de canning"
+      ]
+    },
+    {
+      "nombre": "La Vieja Estación",
+      "alias": [
+        "la vieja estacion",
+        "vieja estacion"
+      ]
+    },
+    {
+      "nombre": "Belleville",
+      "alias": [
+        "belleville",
+        "bellevile",
+        "beleville"
+      ]
+    },
+    {
+      "nombre": "Las Victorias",
+      "alias": [
+        "las victorias"
+      ]
+    },
+    {
+      "nombre": "El Venado",
+      "alias": [
+        "el venado"
+      ]
+    },
+    {
+      "nombre": "Canning Chico",
+      "alias": [
+        "canning chico"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "basePath": "/",
+  "apiVersion": "1.0",
+  "swaggerVersion": "1.1",
+  "apis": [
+    {
+      "operations": [
+        {
+          "httpMethod": "GET",
+          "nickname": "inactive-property-list",
+          "responseClass": "List",
+          "summary": "List of inactive properties.",
+          "notes": "Return all inactive properties. Require Api Key.",
+          "parameters": [
+            {
+              "dataType": "int",
+              "paramType": "query",
+              "required": false,
+              "name": "limit",
+              "description": "Number of results to show. Default: 20"
+            },
+            {
+              "dataType": "int",
+              "paramType": "query",
+              "required": false,
+              "name": "offset",
+              "description": "Number of result item to start showing. Default: 0"
+            },
+            {
+              "dataType": "String",
+              "paramType": "query",
+              "required": false,
+              "name": "format",
+              "description": "Format of the results, defaults to 'json'",
+              "allowableValues": {
+                "values": [
+                  "json",
+                  "xml"
+                ],
+                "valueType": "list"
+              }
+            }
+          ]
+        }
+      ],
+      "path": "/api/v1/inactiveproperty/"
+    }
+  ]
+}

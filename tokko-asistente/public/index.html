@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asistente de consultas</title>
+<style>
+  :root {
+    --azul: #1d4f91;
+    --azul-claro: #e8f0fb;
+    --azul-oscuro: #0b2545;
+    --blanco: #ffffff;
+    --fondo: #f4f7fb;
+    --texto: #14213d;
+    --texto-suave: #52607a;
+    --borde: #d3dcea;
+    --rojo: #b42318;
+    --rojo-fondo: #fdecea;
+    --ambar: #8a5a00;
+    --ambar-fondo: #fff5d6;
+    --verde: #1b6e3c;
+    --verde-fondo: #e6f4ea;
+    --radio: 10px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fondo); color: var(--texto); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { background: var(--azul-oscuro); color: var(--blanco); padding: 14px 16px; }
+  .cabecera { max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; justify-content: space-between; }
+  header h1 { margin: 0; font-size: 1.15rem; font-weight: 650; }
+  header .sub { color: #b9c8e4; font-size: .85rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .chip { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .78rem; font-weight: 600; background: var(--azul-claro); color: var(--azul-oscuro); }
+  .chip.mock { background: #ffe9a8; color: #5c3d00; }
+  .chip.live { background: #c9f0d6; color: #0f4d29; }
+  .banda-sin-validar { background: var(--ambar-fondo); color: var(--ambar); border-bottom: 1px solid #f0d58a; padding: 8px 16px; font-weight: 600; text-align: center; font-size: .9rem; }
+  main { max-width: 1200px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 900px) { main { grid-template-columns: minmax(320px, 5fr) 7fr; align-items: start; } }
+  .tarjeta { background: var(--blanco); border: 1px solid var(--borde); border-radius: var(--radio); padding: 16px; }
+  .tarjeta h2 { margin: 0 0 10px; font-size: 1rem; color: var(--azul-oscuro); }
+  label { display: block; font-size: .85rem; font-weight: 600; color: var(--texto-suave); margin: 10px 0 4px; }
+  textarea, input, select { width: 100%; font: inherit; padding: 10px; border: 1px solid var(--borde); border-radius: 8px; background: var(--blanco); color: var(--texto); }
+  textarea:focus, input:focus, select:focus, button:focus-visible { outline: 3px solid #9cc0f5; outline-offset: 1px; border-color: var(--azul); }
+  textarea { resize: vertical; }
+  .pestanas { display: flex; gap: 6px; margin-bottom: 8px; }
+  .pestana { flex: 1; padding: 8px; border: 1px solid var(--borde); background: var(--blanco); border-radius: 8px; font: inherit; cursor: pointer; color: var(--texto-suave); }
+  .pestana[aria-selected="true"] { background: var(--azul); color: var(--blanco); border-color: var(--azul); }
+  .botones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  button.primario, button.secundario { padding: 10px 16px; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; border: 1px solid var(--azul); }
+  button.primario { background: var(--azul); color: var(--blanco); }
+  button.primario:hover { background: #163f75; }
+  button.secundario { background: var(--blanco); color: var(--azul); }
+  button.secundario:hover { background: var(--azul-claro); }
+  button:disabled { opacity: .6; cursor: wait; }
+  .oculto { display: none !important; }
+  .grilla-2 { display: grid; gap: 0 12px; grid-template-columns: 1fr; }
+  @media (min-width: 520px) { .grilla-2 { grid-template-columns: 1fr 1fr; } }
+  .estado { border-radius: var(--radio); padding: 14px 16px; border: 2px solid; }
+  .estado.derivar { background: var(--rojo-fondo); border-color: var(--rojo); color: var(--rojo); }
+  .estado.simple { background: var(--verde-fondo); border-color: var(--verde); color: var(--verde); }
+  .estado strong { display: block; font-size: 1.05rem; letter-spacing: .02em; }
+  .estado ul { margin: 6px 0 0; padding-left: 20px; color: var(--texto); }
+  .nota-interna { white-space: pre-wrap; margin-top: 8px; color: var(--texto); font-size: .9rem; }
+  #borrador { min-height: 260px; line-height: 1.5; }
+  .contador { font-size: .8rem; color: var(--texto-suave); margin-top: 4px; }
+  .lista-confirmar { list-style: none; padding: 0; margin: 0; }
+  .lista-confirmar li { display: flex; gap: 8px; align-items: flex-start; padding: 6px 0; border-bottom: 1px solid #edf1f7; }
+  .lista-confirmar li:last-child { border-bottom: 0; }
+  .lista-confirmar input { width: auto; margin-top: 4px; }
+  .avisos { margin: 0; padding-left: 20px; color: var(--ambar); }
+  .avisos li { margin: 4px 0; }
+  .aviso-importes { background: var(--ambar-fondo); color: var(--ambar); font-weight: 700; padding: 8px 10px; border-radius: 8px; margin-bottom: 8px; }
+  dl.ficha { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 0; font-size: .92rem; }
+  dl.ficha dt { color: var(--texto-suave); }
+  dl.ficha dd { margin: 0; }
+  .falta { color: var(--ambar); font-style: italic; }
+  .candidato { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #edf1f7; }
+  .candidato:last-child { border-bottom: 0; }
+  .candidato .info { flex: 1 1 220px; }
+  .candidato small { color: var(--texto-suave); display: block; }
+  .vacio { color: var(--texto-suave); font-style: italic; }
+  .resultados { display: grid; gap: 16px; }
+  .error { background: var(--rojo-fondo); color: var(--rojo); padding: 10px 12px; border-radius: 8px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="cabecera">
+    <div>
+      <h1>Asistente de consultas</h1>
+      <div class="sub" id="nombre-inmobiliaria">Borradores de respuesta con la ficha de Tokko</div>
+    </div>
+    <div class="chips">
+      <span class="chip" id="chip-modo">…</span>
+      <span class="chip" id="chip-props">…</span>
+      <button class="secundario" id="btn-sync" type="button" style="padding:4px 10px;font-size:.8rem">Sincronizar</button>
+    </div>
+  </div>
+</header>
+<div class="banda-sin-validar oculto" id="banda-sin-validar">SIN VALIDAR CONTRA LA API REAL: los nombres de campo de Tokko todavía no se compararon con una propiedad real. Revisá cada dato antes de enviar.</div>
+<div class="banda-sin-validar oculto" id="banda-aviso-modo"></div>
+
+<main>
+  <section class="tarjeta" aria-labelledby="t-consulta">
+    <h2 id="t-consulta">Consulta</h2>
+    <div class="pestanas" role="tablist">
+      <button class="pestana" role="tab" aria-selected="true" id="tab-pegar" type="button">Pegar consulta</button>
+      <button class="pestana" role="tab" aria-selected="false" id="tab-manual" type="button">Cargar a mano</button>
+    </div>
+
+    <div id="panel-pegar">
+      <label for="texto">Texto del mail de Tokko o del WhatsApp</label>
+      <textarea id="texto" rows="9" placeholder="Pegá acá la consulta completa (nombre, teléfono, mail y mensaje)"></textarea>
+    </div>
+
+    <div id="panel-manual" class="oculto">
+      <div class="grilla-2">
+        <div><label for="m-nombre">Nombre</label><input id="m-nombre" autocomplete="off"></div>
+        <div><label for="m-telefono">Teléfono</label><input id="m-telefono" inputmode="tel" autocomplete="off"></div>
+        <div><label for="m-email">Mail</label><input id="m-email" type="email" autocomplete="off"></div>
+        <div><label for="m-propiedad">Propiedad (ID, código, URL o dirección)</label><input id="m-propiedad" autocomplete="off"></div>
+      </div>
+      <label for="m-mensaje">Mensaje</label>
+      <textarea id="m-mensaje" rows="5"></textarea>
+    </div>
+
+    <div id="bloque-ejemplos" class="oculto">
+      <label for="ejemplos">Probar con un ejemplo (modo mock)</label>
+      <select id="ejemplos"><option value="">Elegí una consulta de ejemplo…</option></select>
+    </div>
+
+    <div class="botones">
+      <button class="primario" id="btn-analizar" type="button">Analizar</button>
+      <button class="secundario" id="btn-limpiar" type="button">Limpiar</button>
+    </div>
+    <div id="error" class="error oculto" role="alert"></div>
+  </section>
+
+  <section class="resultados" id="resultados" aria-live="polite">
+    <div class="tarjeta vacio" id="sin-resultados">Pegá una consulta y tocá “Analizar”. La herramienta no envía nada: copiás el borrador y lo mandás vos.</div>
+
+    <div id="bloque-estado" class="estado oculto"></div>
+
+    <div class="tarjeta oculto" id="bloque-candidatos">
+      <h2>Elegí la propiedad</h2>
+      <div id="texto-candidatos" class="contador"></div>
+      <div id="lista-candidatos"></div>
+      <label for="buscar-prop">Buscar otra propiedad (código, barrio, tipo)</label>
+      <input id="buscar-prop" placeholder="Ej.: EJ-101, Santa Juana, departamento" autocomplete="off">
+      <div id="lista-busqueda"></div>
+    </div>
+
+    <div class="tarjeta oculto" id="bloque-borrador">
+      <h2>Borrador para WhatsApp</h2>
+      <div id="aviso-importes" class="aviso-importes oculto">VERIFICAR IMPORTES ANTES DE ENVIAR</div>
+      <label for="borrador" class="oculto">Borrador editable</label>
+      <textarea id="borrador" spellcheck="true"></textarea>
+      <div class="contador" id="contador"></div>
+      <div class="botones">
+        <button class="primario" id="btn-copiar" type="button">Copiar</button>
+        <span id="copiado" class="contador oculto">Copiado</span>
+      </div>
+    </div>
+
+    <div class="tarjeta oculto" id="bloque-confirmar">
+      <h2>A confirmar antes de enviar</h2>
+      <ul class="lista-confirmar" id="lista-confirmar"></ul>
+    </div>
+
+    <div class="tarjeta oculto" id="bloque-avisos">
+      <h2>Avisos</h2>
+      <ul class="avisos" id="lista-avisos"></ul>
+    </div>
+
+    <div class="tarjeta oculto" id="bloque-ficha">
+      <h2>Ficha</h2>
+      <dl class="ficha" id="ficha"></dl>
+    </div>
+
+    <div class="tarjeta oculto" id="bloque-detectado">
+      <h2>Lo que detecté en la consulta</h2>
+      <dl class="ficha" id="detectado"></dl>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  let ultimaEntrada = null;
+  let modoManual = false;
+  let ejemplos = [];
+
+  function el(tag, props = {}, ...hijos) {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) {
+      if (k === 'class') n.className = v;
+      else if (k === 'text') n.textContent = v;
+      else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+      else n.setAttribute(k, v);
+    }
+    for (const h of hijos) if (h !== null && h !== undefined) n.append(h);
+    return n;
+  }
+  const mostrar = (id, si = true) => $(id).classList.toggle('oculto', !si);
+  const vaciar = (id) => { $(id).replaceChildren(); };
+
+  function horaCorta(iso) {
+    if (!iso) return 'sin dato';
+    return new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+
+  async function cargarEstado() {
+    try {
+      const r = await fetch('/api/estado');
+      const e = await r.json();
+      $('chip-modo').textContent = e.modo === 'live' ? 'MODO LIVE' : 'MODO MOCK (ejemplos)';
+      $('chip-modo').className = 'chip ' + e.modo;
+      $('chip-props').textContent = `${e.cantidad} propiedades · ${horaCorta(e.ultimaSync)}${e.errorSync ? ' · error de sync' : ''}`;
+      $('chip-props').title = e.errorSync || '';
+      if (e.inmobiliaria) $('nombre-inmobiliaria').textContent = e.inmobiliaria;
+      mostrar('banda-sin-validar', e.sinValidar);
+      $('banda-aviso-modo').textContent = e.avisoModo || '';
+      mostrar('banda-aviso-modo', Boolean(e.avisoModo));
+      if (e.modo === 'mock') cargarEjemplos();
+    } catch {
+      $('chip-modo').textContent = 'Servidor no disponible';
+    }
+  }
+
+  async function cargarEjemplos() {
+    const r = await fetch('/api/ejemplos');
+    ejemplos = (await r.json()).consultas || [];
+    const sel = $('ejemplos');
+    sel.replaceChildren(el('option', { value: '', text: 'Elegí una consulta de ejemplo…' }));
+    ejemplos.forEach((c, i) => sel.append(el('option', { value: String(i), text: c.titulo })));
+    mostrar('bloque-ejemplos', ejemplos.length > 0);
+  }
+
+  function leerEntrada() {
+    if (!modoManual) return { texto: $('texto').value };
+    return {
+      nombre: $('m-nombre').value, telefono: $('m-telefono').value, email: $('m-email').value,
+      propiedad: $('m-propiedad').value, mensaje: $('m-mensaje').value,
+    };
+  }
+
+  async function analizar(propiedadId = null) {
+    const entrada = propiedadId ? ultimaEntrada : leerEntrada();
+    if (!entrada) return;
+    ultimaEntrada = entrada;
+    mostrar('error', false);
+    $('btn-analizar').disabled = true;
+    try {
+      const r = await fetch('/api/analizar', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...entrada, propiedadId }),
+      });
+      const datos = await r.json();
+      if (!r.ok) throw new Error(datos.error || 'Error');
+      pintar(datos);
+    } catch (e) {
+      $('error').textContent = e.message;
+      mostrar('error', true);
+    } finally {
+      $('btn-analizar').disabled = false;
+    }
+  }
+
+  function pintarEstado(d) {
+    const caja = $('bloque-estado');
+    caja.replaceChildren();
+    if (d.derivacion.derivar) {
+      caja.className = 'estado derivar';
+      caja.append(el('strong', { text: 'DERIVAR A PERSONA' }));
+      const ul = el('ul');
+      d.derivacion.motivos.forEach((m) => ul.append(el('li', { text: m.texto + (m.detalle ? ': ' + m.detalle : '') })));
+      caja.append(ul);
+      caja.append(el('div', { class: 'nota-interna', text: 'El borrador solo acusa recibo. Respondé vos o pasáselo a un asesor.' }));
+    } else {
+      caja.className = 'estado simple';
+      caja.append(el('strong', { text: 'Respuesta simple' }));
+      caja.append(el('div', { class: 'nota-interna', text: 'Revisá el borrador y los puntos a confirmar antes de enviarlo.' }));
+    }
+    mostrar('bloque-estado', true);
+  }
+
+  function filaCandidato(c, textoBoton) {
+    const ops = (c.operaciones || []).join(' y ');
+    return el('div', { class: 'candidato' },
+      el('div', { class: 'info' },
+        el('strong', { text: `${c.codigo || 'sin código'} · ${c.tipo || 'tipo sin dato'}${ops ? ' en ' + ops.toLowerCase() : ''}` }),
+        el('small', { text: `${c.ubicacion || 'ubicación sin dato'} · ID ${c.id}${c.motivos ? ' · coincide por: ' + c.motivos.join(', ') : ''}` })),
+      el('button', { class: 'secundario', type: 'button', text: textoBoton, onclick: () => analizar(c.id) }));
+  }
+
+  function pintarCandidatos(d) {
+    const est = d.identificacion.estado;
+    const mostrarBloque = est !== 'identificada' || d.identificacion.candidatos.length > 1;
+    mostrar('bloque-candidatos', mostrarBloque);
+    vaciar('lista-candidatos');
+    vaciar('lista-busqueda');
+    $('buscar-prop').value = '';
+    if (!mostrarBloque) return;
+    const textos = {
+      candidatos: 'No estoy seguro de qué propiedad es. Estas coinciden en parte:',
+      varias: 'La consulta menciona más de una propiedad. Se deriva; si querés armar la respuesta de una, elegila:',
+      no_encontrada: 'No la encuentro entre las propiedades publicadas. Puede estar vendida, reservada o sin publicar: revisá en Tokko. Si es otra, buscala abajo.',
+      sin_referencia: 'El mensaje no dice por qué propiedad consulta. Buscala abajo.',
+      identificada: 'Identificada. Otras coincidencias:',
+    };
+    $('texto-candidatos').textContent = textos[est] || '';
+    d.identificacion.candidatos.forEach((c) => $('lista-candidatos').append(filaCandidato(c, 'Usar esta')));
+    if (!d.identificacion.candidatos.length) $('lista-candidatos').append(el('div', { class: 'vacio', text: 'Sin candidatas.' }));
+  }
+
+  function pintarBorrador(d) {
+    $('borrador').value = d.borrador.texto;
+    const importes = d.borrador.avisos.some((a) => a.startsWith('VERIFICAR IMPORTES'));
+    mostrar('aviso-importes', importes);
+    mostrar('bloque-borrador', true);
+    actualizarContador();
+    mostrar('copiado', false);
+
+    vaciar('lista-confirmar');
+    d.borrador.aConfirmar.forEach((a, i) => {
+      const id = 'conf-' + i;
+      $('lista-confirmar').append(el('li', {}, el('input', { type: 'checkbox', id }), el('label', { for: id, text: a.texto, style: 'margin:0;font-weight:400;color:inherit' })));
+    });
+    mostrar('bloque-confirmar', d.borrador.aConfirmar.length > 0);
+
+    vaciar('lista-avisos');
+    const avisos = [...d.borrador.avisos];
+    if (d.borrador.notaInterna) avisos.unshift(d.borrador.notaInterna.replace('DERIVAR A PERSONA.\n', 'Nota interna: '));
+    avisos.forEach((a) => $('lista-avisos').append(el('li', { text: a })));
+    mostrar('bloque-avisos', avisos.length > 0);
+  }
+
+  function fila(dl, clave, valor) {
+    $(dl).append(el('dt', { text: clave }));
+    if (valor === null || valor === undefined || valor === '' || (Array.isArray(valor) && !valor.length)) $(dl).append(el('dd', { class: 'falta', text: 'sin dato' }));
+    else $(dl).append(el('dd', { text: Array.isArray(valor) ? valor.join(', ') : String(valor) }));
+  }
+
+  function pintarFicha(f) {
+    vaciar('ficha');
+    mostrar('bloque-ficha', Boolean(f));
+    if (!f) return;
+    const sup = f.superficies || {};
+    const m2 = (n) => (n ? `${n} m²` : null);
+    fila('ficha', 'Código / ID', `${f.codigo || 'sin código'} / ${f.id}`);
+    fila('ficha', 'Título en Tokko', f.titulo);
+    fila('ficha', 'Tipo', f.tipo);
+    fila('ficha', 'Operación y precio', f.operacionesTexto);
+    fila('ficha', 'Disponibilidad', f.disponibilidad ? `${f.disponibilidad.estado}${f.disponibilidad.texto ? ' (' + f.disponibilidad.texto + ')' : ''}` : null);
+    fila('ficha', 'Ubicación', f.ubicacion ? f.ubicacion.texto : null);
+    fila('ficha', 'Dirección', f.direccion);
+    fila('ficha', 'Ambientes', f.ambientes);
+    fila('ficha', 'Dormitorios', f.dormitorios);
+    fila('ficha', 'Baños / toilettes', f.banos ? `${f.banos}${f.toilettes ? ' + ' + f.toilettes + ' toilette' : ''}` : null);
+    fila('ficha', 'Cocheras', f.cocheras);
+    fila('ficha', 'Sup. cubierta', m2(sup.cubierta));
+    fila('ficha', 'Sup. semicubierta', m2(sup.semicubierta));
+    fila('ficha', 'Sup. terreno', m2(sup.terreno));
+    fila('ficha', 'Sup. total', m2(sup.total));
+    fila('ficha', 'Expensas', f.expensas ? `${f.expensas.moneda || '(moneda sin dato)'} ${f.expensas.monto}` : null);
+    fila('ficha', 'Características', f.caracteristicas);
+    fila('ficha', 'Sincronizado', horaCorta(f.sincronizado));
+    if (f.urlPublica) {
+      $('ficha').append(el('dt', { text: 'Publicación' }));
+      $('ficha').append(el('dd', {}, el('a', { href: f.urlPublica, target: '_blank', rel: 'noopener noreferrer', text: 'abrir' })));
+    }
+  }
+
+  function pintarDetectado(d) {
+    vaciar('detectado');
+    fila('detectado', 'Nombre', d.contacto.nombre);
+    fila('detectado', 'Teléfono', d.contacto.telefonos);
+    fila('detectado', 'Mail', d.contacto.emails);
+    fila('detectado', 'Pregunta por', d.intenciones.map((i) => i.texto).concat((d.caracteristicasPedidas || []).map((c) => c.nombre)));
+    const r = d.referencias;
+    fila('detectado', 'Referencias', [...r.codigos.map((c) => 'código ' + c), ...r.ids.map((i) => 'ID ' + i), ...r.urls, ...r.zonas.map((z) => z.nombre), ...r.tipos, ...r.operaciones]);
+    fila('detectado', 'Identificación', `${d.identificacion.estado}${d.identificacion.motivos.length ? ' (' + d.identificacion.motivos.join(', ') + ')' : ''}`);
+    mostrar('bloque-detectado', true);
+  }
+
+  function pintar(d) {
+    mostrar('sin-resultados', false);
+    pintarEstado(d);
+    pintarCandidatos(d);
+    pintarBorrador(d);
+    pintarFicha(d.ficha);
+    pintarDetectado(d);
+  }
+
+  function ajustarAlto() {
+    const b = $('borrador');
+    b.style.height = 'auto';
+    b.style.height = Math.max(260, b.scrollHeight + 4) + 'px';
+  }
+
+  function actualizarContador() {
+    ajustarAlto();
+    const t = $('borrador').value;
+    const pendientes = (t.match(/\[A CONFIRMAR/g) || []).length;
+    $('contador').textContent = `${t.length} caracteres${pendientes ? ` · ${pendientes} dato(s) a confirmar en el texto` : ''}`;
+  }
+
+  async function copiar() {
+    const t = $('borrador').value;
+    const pendientes = (t.match(/\[A CONFIRMAR/g) || []).length;
+    if (pendientes && !confirm(`El borrador todavía tiene ${pendientes} dato(s) [A CONFIRMAR]. ¿Copiarlo igual?`)) return;
+    try {
+      await navigator.clipboard.writeText(t);
+    } catch {
+      $('borrador').select();
+      document.execCommand('copy');
+    }
+    mostrar('copiado', true);
+  }
+
+  let temporizadorBusqueda = null;
+  function buscar() {
+    clearTimeout(temporizadorBusqueda);
+    temporizadorBusqueda = setTimeout(async () => {
+      const q = $('buscar-prop').value.trim();
+      vaciar('lista-busqueda');
+      if (!q) return;
+      const r = await fetch('/api/propiedades?q=' + encodeURIComponent(q));
+      const { propiedades } = await r.json();
+      if (!propiedades.length) { $('lista-busqueda').append(el('div', { class: 'vacio', text: 'No encontré propiedades publicadas con ese texto.' })); return; }
+      propiedades.forEach((p) => $('lista-busqueda').append(filaCandidato({ id: p.id, codigo: p.codigo, tipo: p.tipo, ubicacion: p.ubicacion && p.ubicacion.texto, operaciones: (p.operaciones || []).map((o) => o.tipo) }, 'Usar esta')));
+    }, 250);
+  }
+
+  function cambiarPestana(manual) {
+    modoManual = manual;
+    $('tab-pegar').setAttribute('aria-selected', String(!manual));
+    $('tab-manual').setAttribute('aria-selected', String(manual));
+    mostrar('panel-pegar', !manual);
+    mostrar('panel-manual', manual);
+  }
+
+  function limpiar() {
+    ['texto', 'm-nombre', 'm-telefono', 'm-email', 'm-propiedad', 'm-mensaje'].forEach((id) => { $(id).value = ''; });
+    $('ejemplos').value = '';
+    ['bloque-estado', 'bloque-candidatos', 'bloque-borrador', 'bloque-confirmar', 'bloque-avisos', 'bloque-ficha', 'bloque-detectado', 'error'].forEach((id) => mostrar(id, false));
+    mostrar('sin-resultados', true);
+    ultimaEntrada = null;
+  }
+
+  $('tab-pegar').addEventListener('click', () => cambiarPestana(false));
+  $('tab-manual').addEventListener('click', () => cambiarPestana(true));
+  $('btn-analizar').addEventListener('click', () => analizar());
+  $('btn-limpiar').addEventListener('click', limpiar);
+  $('btn-copiar').addEventListener('click', copiar);
+  $('borrador').addEventListener('input', actualizarContador);
+  $('buscar-prop').addEventListener('input', buscar);
+  $('texto').addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) analizar(); });
+  $('ejemplos').addEventListener('change', (e) => {
+    const c = ejemplos[Number(e.target.value)];
+    if (!c) return;
+    cambiarPestana(false);
+    $('texto').value = c.texto;
+    analizar();
+  });
+  $('btn-sync').addEventListener('click', async () => {
+    $('btn-sync').disabled = true;
+    try { await fetch('/api/sincronizar', { method: 'POST' }); await cargarEstado(); } finally { $('btn-sync').disabled = false; }
+  });
+
+  cargarEstado();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+# Credenciales: la API key de Tokko vive solo en .env
+.env
+.env.*
+!.env.example
+
+# Datos locales: caché de propiedades y logs
+data/
+logs/
+
+# Copias de propiedades reales traídas con "npm run descubrir".
+# Aunque estén saneadas, no se suben al repo.
+fixtures/propiedad-real-saneada.json
+fixtures/campos-detectados.json
+
+node_modules/
+.DS_Store
+Thumbs.db

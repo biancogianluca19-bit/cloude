@@ -1,0 +1,226 @@
+{
+  "_aviso": "EJEMPLO. Propiedades inventadas para el modo mock y los tests. No son propiedades reales de Gazda Rossi. La estructura imita lo que se sabe de la API de Tokko y está SIN VALIDAR contra una respuesta real. Los objetos 'location' sí usan id, name y full_location reales del endpoint público /location/quicksearch/.",
+  "meta": {
+    "limit": 20,
+    "next": null,
+    "offset": 0,
+    "previous": null,
+    "total_count": 8
+  },
+  "objects": [
+    {
+      "id": 900001,
+      "reference_code": "EJ-101",
+      "publication_title": "EJEMPLO - Casa en Santa Juana",
+      "status": "Disponible",
+      "type": { "id": 3, "name": "Casa", "code": "HO" },
+      "operations": [
+        { "operation_id": 1, "operation_type": "Venta", "prices": [{ "currency": "USD", "price": 285000, "period": 0 }] }
+      ],
+      "location": {
+        "id": 55974,
+        "name": "Santa Juana",
+        "full_location": "Argentina | G.B.A. Zona Sur | Esteban Echeverria | Canning (E. Echeverria) | Santa Juana"
+      },
+      "address": "Lote EJEMPLO 245",
+      "fake_address": "Santa Juana",
+      "room_amount": 5,
+      "suite_amount": 3,
+      "bathroom_amount": 2,
+      "toilet_amount": 1,
+      "parking_lot_amount": 2,
+      "roofed_surface": "220.00",
+      "semiroofed_surface": "30.00",
+      "surface": "800.00",
+      "total_surface": "800.00",
+      "expenses": 180000,
+      "age": 8,
+      "description": "EJEMPLO. ¡Increíble oportunidad! Espectacular casa en barrio cerrado. Este texto existe para comprobar que el borrador no copia adjetivos de la descripción.",
+      "tags": [
+        { "id": 1, "name": "Pileta", "type": 3 },
+        { "id": 2, "name": "Parrilla", "type": 3 },
+        { "id": 3, "name": "Agua corriente", "type": 1 }
+      ],
+      "public_url": "https://www.example.com/propiedad/900001-casa-venta-santa-juana",
+      "internal_data": {
+        "property_owners": [{ "name": "Propietario EJEMPLO", "email": "propietario@example.com", "cellphone": "11 0000-0000" }],
+        "commission": "3%",
+        "internal_comments": "EJEMPLO. Nota interna que nunca debe aparecer en la ficha."
+      },
+      "producer": { "name": "Asesor EJEMPLO", "email": "asesor@example.com", "cellphone": "11 0000-0001" }
+    },
+    {
+      "id": 900002,
+      "reference_code": "EJ-102",
+      "publication_title": "EJEMPLO - Casa en alquiler en Canning Chico",
+      "status": "Disponible",
+      "type": { "id": 3, "name": "Casa", "code": "HO" },
+      "operations": [
+        { "operation_id": 2, "operation_type": "Alquiler", "prices": [{ "currency": "ARS", "price": 1200000, "period": 0 }] }
+      ],
+      "location": {
+        "id": 256416,
+        "name": "Canning Chico",
+        "full_location": "Argentina | G.B.A. Zona Sur | Esteban Echeverria | Canning (E. Echeverria) | Canning Chico"
+      },
+      "address": "Lote EJEMPLO 17",
+      "room_amount": 4,
+      "suite_amount": 2,
+      "bathroom_amount": 2,
+      "toilet_amount": 0,
+      "parking_lot_amount": 1,
+      "roofed_surface": "140.00",
+      "surface": "500.00",
+      "total_surface": "500.00",
+      "expenses": 95000,
+      "description": "EJEMPLO. Casa de una planta.",
+      "tags": [
+        { "id": 4, "name": "Apto mascotas", "type": 3 },
+        { "id": 2, "name": "Parrilla", "type": 3 }
+      ],
+      "public_url": "https://www.example.com/propiedad/900002-casa-alquiler-canning-chico"
+    },
+    {
+      "id": 900003,
+      "reference_code": "EJ-103",
+      "publication_title": "EJEMPLO - Lote en El Rodal",
+      "status": "Disponible",
+      "type": { "id": 1, "name": "Terreno", "code": "LA" },
+      "operations": [
+        { "operation_id": 1, "operation_type": "Venta", "prices": [{ "currency": "USD", "price": 48000, "period": 0 }] }
+      ],
+      "location": {
+        "id": 26445,
+        "name": "El Rodal",
+        "full_location": "Argentina | G.B.A. Zona Sur | Esteban Echeverria | Countries/B.Cerrado (E. Echeverría) | El Rodal"
+      },
+      "address": "Lote EJEMPLO 88",
+      "surface": "1000.00",
+      "total_surface": "1000.00",
+      "description": "EJEMPLO. Lote interno.",
+      "tags": [],
+      "public_url": "https://www.example.com/propiedad/900003-lote-venta-el-rodal"
+    },
+    {
+      "id": 900004,
+      "reference_code": "EJ-104",
+      "publication_title": "EJEMPLO - Departamento en alquiler en Canning",
+      "status": "Disponible",
+      "type": { "id": 2, "name": "Departamento", "code": "AP" },
+      "operations": [
+        { "operation_id": 2, "operation_type": "Alquiler", "prices": [] }
+      ],
+      "web_price": false,
+      "location": {
+        "id": 26450,
+        "name": "Canning (E. Echeverria)",
+        "full_location": "Argentina | G.B.A. Zona Sur | Esteban Echeverria | Canning (E. Echeverria)"
+      },
+      "address": "Calle Ejemplo 123",
+      "room_amount": 2,
+      "suite_amount": 1,
+      "bathroom_amount": 1,
+      "roofed_surface": "48.00",
+      "description": "EJEMPLO. Departamento con balcón.",
+      "tags": [],
+      "public_url": "https://www.example.com/propiedad/900004-depto-alquiler-canning"
+    },
+    {
+      "id": 900005,
+      "reference_code": "EJ-105",
+      "publication_title": "EJEMPLO - Casa en Monte Grande",
+      "status": "Reservada",
+      "type": { "id": 3, "name": "Casa", "code": "HO" },
+      "operations": [
+        { "operation_id": 1, "operation_type": "Venta", "prices": [{ "currency": "USD", "price": 160000, "period": 0 }] }
+      ],
+      "location": {
+        "id": 26453,
+        "name": "Monte Grande",
+        "full_location": "Argentina | G.B.A. Zona Sur | Esteban Echeverria | Monte Grande"
+      },
+      "address": "Calle Ejemplo 456",
+      "room_amount": 4,
+      "suite_amount": 3,
+      "bathroom_amount": 1,
+      "parking_lot_amount": 1,
+      "roofed_surface": "120.00",
+      "surface": "300.00",
+      "description": "EJEMPLO. Casa con patio.",
+      "tags": [],
+      "public_url": "https://www.example.com/propiedad/900005-casa-venta-monte-grande"
+    },
+    {
+      "id": 900006,
+      "reference_code": "EJ-106",
+      "publication_title": "EJEMPLO - Casa en Terralagos",
+      "status": "Disponible",
+      "type": { "id": 3, "name": "Casa", "code": "HO" },
+      "operations": [
+        { "operation_id": 1, "operation_type": "Venta", "prices": [{ "currency": "USD", "price": 410000, "period": 0 }] }
+      ],
+      "location": {
+        "id": 55996,
+        "name": "Terralagos",
+        "full_location": "Argentina | G.B.A. Zona Sur | Ezeiza | Countries/B.Cerrado (Ezeiza) | Terralagos"
+      },
+      "address": "Lote EJEMPLO 512",
+      "room_amount": 6,
+      "suite_amount": 4,
+      "bathroom_amount": 3,
+      "toilet_amount": 1,
+      "parking_lot_amount": 2,
+      "roofed_surface": "310.00",
+      "surface": "1100.00",
+      "expenses": 240000,
+      "description": "EJEMPLO. Casa en dos plantas al lago.",
+      "tags": [
+        { "id": 1, "name": "Pileta", "type": 3 },
+        { "id": 5, "name": "Apto crédito", "type": 3 }
+      ],
+      "public_url": "https://www.example.com/propiedad/900006-casa-venta-terralagos"
+    },
+    {
+      "id": 900007,
+      "reference_code": "EJ-107",
+      "publication_title": "EJEMPLO - Casa en alquiler en Santa Juana",
+      "status": "Disponible",
+      "type": { "id": 3, "name": "Casa", "code": "HO" },
+      "operations": [
+        { "operation_id": 2, "operation_type": "Alquiler", "prices": [{ "currency": "ARS", "price": 1800000, "period": 0 }] }
+      ],
+      "location": {
+        "id": 55974,
+        "name": "Santa Juana",
+        "full_location": "Argentina | G.B.A. Zona Sur | Esteban Echeverria | Canning (E. Echeverria) | Santa Juana"
+      },
+      "address": "Lote EJEMPLO 301",
+      "room_amount": 4,
+      "suite_amount": 3,
+      "bathroom_amount": 2,
+      "parking_lot_amount": 2,
+      "roofed_surface": "180.00",
+      "surface": "700.00",
+      "expenses": 160000,
+      "description": "EJEMPLO. Casa en alquiler.",
+      "tags": [{ "id": 1, "name": "Pileta", "type": 3 }],
+      "public_url": "https://www.example.com/propiedad/900007-casa-alquiler-santa-juana"
+    },
+    {
+      "id": 900008,
+      "reference_code": "EJ-108",
+      "publication_title": "EJEMPLO - Casa en Adrogué",
+      "type": { "id": 3, "name": "Casa", "code": "HO" },
+      "operations": [
+        { "operation_id": 1, "operation_type": "Venta", "prices": [{ "currency": "USD", "price": 135000, "period": 0 }] }
+      ],
+      "location": {
+        "id": 26354,
+        "name": "Adrogue",
+        "full_location": "Argentina | G.B.A. Zona Sur | Almirante Brown | Adrogue"
+      },
+      "description": "EJEMPLO. Ficha con pocos datos cargados, para probar los 'a confirmar'.",
+      "public_url": "https://www.example.com/propiedad/900008-casa-venta-adrogue"
+    }
+  ]
+}

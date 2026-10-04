@@ -1,0 +1,42 @@
+{
+  "meta": {
+    "total_count": 5
+  },
+  "objects": [
+    {
+      "full_location": "Argentina | G.B.A. Zona Sur | Ezeiza | Canning (Ezeiza)",
+      "id": 26457,
+      "name": "Canning (Ezeiza)",
+      "resource_uri": "/api/v1/location/26457/",
+      "type": "Localidad"
+    },
+    {
+      "full_location": "Argentina | G.B.A. Zona Sur | Esteban Echeverria | Canning (E. Echeverria)",
+      "id": 26450,
+      "name": "Canning (E. Echeverria)",
+      "resource_uri": "/api/v1/location/26450/",
+      "type": "Localidad"
+    },
+    {
+      "full_location": "Argentina | G.B.A. Zona Sur | Esteban Echeverria | Canning (E. Echeverria) | La Alameda",
+      "id": 80448,
+      "name": "La Alameda",
+      "resource_uri": "/api/v1/location/80448/",
+      "type": "Localidad"
+    },
+    {
+      "full_location": "Argentina | G.B.A. Zona Sur | Ezeiza | Canning (Ezeiza) | Canning",
+      "id": 81923,
+      "name": "Canning",
+      "resource_uri": "/api/v1/location/81923/",
+      "type": "Barrio"
+    },
+    {
+      "full_location": "Argentina | G.B.A. Zona Sur | Esteban Echeverria | Canning (E. Echeverria) | Santa Juana",
+      "id": 55974,
+      "name": "Santa Juana",
+      "resource_uri": "/api/v1/location/55974/",
+      "type": "Localidad"
+    }
+  ]
+}
