@@ -1,6 +1,6 @@
 # GB Soluciones Tecnológicas · sitio portfolio
 
-Sitio estático (HTML, CSS y JavaScript sin dependencias) que presenta a GB Soluciones Tecnológicas y siete proyectos.
+Sitio estático (HTML, CSS y JavaScript sin dependencias) que presenta a GB Soluciones Tecnológicas y seis proyectos.
 
 ## Archivos
 
@@ -43,7 +43,7 @@ Arrastrá la carpeta `gb-soluciones` a app.netlify.com/drop.
 
 Las imágenes de `img/` son recortes de capturas de los sitios publicados, tomadas el 27/09/2026. Si cambia algún proyecto, reemplazá el archivo con el mismo nombre y proporción (3:2 para `-principal`, 4:5 para `-detalle`).
 
-## Proyectos incluidos (7)
+## Proyectos incluidos (6)
 
 Hechos con Claude:
 - UMBRAL Canning (demo, barrio ficticio): https://umbral-canning.vercel.app
@@ -54,7 +54,5 @@ Hechos con ChatGPT:
 - La Pasión de Rosas (demo): https://la-pasion-de-rosas-demo.biancogianluca19.chatgpt.site
 - Lo de Gus (demo): https://menu-lodegus-demo.biancogianluca19.chatgpt.site
 - CV virtual: https://gianluca-bianco-cv.biancogianluca19.chatgpt.site
-- Recorrido 3D UF 208 (Gazda Rossi): https://gazda-rossi-uf208-recorrido.biancogianluca19.chatgpt.site
-  (se eligió esta versión porque tiene el recorrido 3D completo; la de `-visita` es una portada que enlaza a esta)
 
 Para agregar un proyecto: sumá sus dos recortes en `img/` y copiá un bloque `<article class="work">` en `index.html`.
